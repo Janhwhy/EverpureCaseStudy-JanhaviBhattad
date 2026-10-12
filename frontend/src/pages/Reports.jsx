@@ -35,7 +35,7 @@ function Heatmap({ rows, of, selected, onSelect }) {
     <div onMouseLeave={tip.hide}>
       <div style={{ display: 'grid', gridTemplateColumns: '64px minmax(0, 1fr) 46px', gap: '3px 10px', alignItems: 'center' }}>
         <span className="eyebrow" style={{ fontSize: 10 }}>Report</span>
-        <span className="eyebrow" style={{ fontSize: 10 }}>Load time · month (snapshot) 1 → {of}</span>
+        <span className="eyebrow" style={{ fontSize: 10 }}>Avg load time · month (snapshot) 1 → {of}</span>
         <span className="eyebrow" style={{ fontSize: 10, textAlign: 'right' }}>% &gt;15 s</span>
         {rows.map((r) => (
           <div key={r.report_id} style={{ display: 'contents' }}>
@@ -49,7 +49,7 @@ function Heatmap({ rows, of, selected, onSelect }) {
               {r.values.map((v, i) => (
                 <div key={i} style={{ height: 14, borderRadius: 2, background: heat(v) }}
                   onMouseMove={(e) => v != null && tip.show(e, (
-                    <><div style={{ marginBottom: 4 }}><b>{r.report_id}</b> · snapshot {i + 1}</div><KV k="Load time" v={fmtSec(v)} /></>
+                    <><div style={{ marginBottom: 4 }}><b>{r.report_id}</b> · snapshot {i + 1}</div><KV k="Avg load time" v={fmtSec(v)} /></>
                   ))} />
               ))}
             </div>
@@ -65,10 +65,10 @@ function Heatmap({ rows, of, selected, onSelect }) {
       </div>
       {tip.node}
       <div className="legend" style={{ marginTop: 14 }}>
-        <span><i className="sw" style={{ background: '#b9cbb9' }} /> ≤15 s</span>
-        <span><i className="sw" style={{ background: '#ffb162' }} /> 15–30 s</span>
-        <span><i className="sw" style={{ background: '#a35139' }} /> 30–45 s</span>
-        <span><i className="sw" style={{ background: '#7a3726' }} /> over 45 s</span>
+        <span><i className="sw" style={{ background: '#b9cbb9' }} /> avg load ≤ 15 s</span>
+        <span><i className="sw" style={{ background: '#ffb162' }} /> &gt;15–30 s</span>
+        <span><i className="sw" style={{ background: '#a35139' }} /> &gt;30–45 s</span>
+        <span><i className="sw" style={{ background: '#7a3726' }} /> &gt;45 s</span>
         <span><i className="sw" style={{ background: '#efebe3' }} /> not yet replayed</span>
       </div>
     </div>
@@ -85,29 +85,31 @@ function ReportDetail({ id, snapshot }) {
   const now = h[h.length - 1];
   const breaches = h.filter((s) => s.avg_load_time_sec > 15).length;
   const owners = new Set(h.map((s) => s.owner_email).filter(Boolean));
-  const cost = h.reduce((acc, s) => acc + (s.credits_clean ?? 0) * 3 + s.aws_hosting_cost_usd, 0);
+  // Kept apart: AWS is measured in USD, Snowflake is credits priced at an assumed $3.
+  const aws = h.reduce((acc, s) => acc + s.aws_hosting_cost_usd, 0);
+  const snowflake = h.reduce((acc, s) => acc + (s.credits_clean ?? 0) * 3, 0);
   const views = h.reduce((acc, s) => acc + s.monthly_active_views, 0);
 
   return (
     <Panel title={<><span className="mono">{data.report_id}</span> · {data.report_name}</>}
       sub={now.owner_email ? `Owned by ${now.owner_email}` : 'No owner in the current snapshot'}>
       <div className="detail-grid">
-        <div className="stat"><b>{fmtSec(now.avg_load_time_sec)}</b><span>Load time now</span></div>
+        <div className="stat"><b>{fmtSec(now.avg_load_time_sec)}</b><span>Avg load now</span></div>
         <div className="stat"><b>{breaches}/{h.length}</b><span>Snapshots over 15 s</span></div>
-        <div className="stat"><b>{fmtUsd2(cost / Math.max(views, 1))}</b><span>Cost per view</span></div>
-        <div className="stat"><b>{fmtUsd(cost)}</b><span>Cost so far</span></div>
+        <div className="stat"><b>{fmtUsd(aws)}</b><span>AWS so far · {fmtUsd2(aws / Math.max(views, 1))}/view</span></div>
+        <div className="stat"><b>{fmtUsd(snowflake)}</b><span>Snowflake est. · {fmtUsd2(snowflake / Math.max(views, 1))}/view</span></div>
         <div className="stat"><b>{fmtInt(Math.round(views / h.length))}</b><span>Avg monthly views</span></div>
-        <div className="stat"><b>{owners.size}</b><span>Different owners</span></div>
+        <div className="stat"><b>{owners.size}</b><span>Owners so far</span></div>
       </div>
 
-      <div className="eyebrow" style={{ marginBottom: 4 }}>Load time by snapshot</div>
+      <div className="eyebrow" style={{ marginBottom: 4 }}>Avg load time by snapshot</div>
       <Fill min={150}><ResponsiveContainer width="100%" height="100%">
         <LineChart data={h} margin={{ top: 6, right: 8, left: -20, bottom: 0 }}>
           <CartesianGrid stroke="#ece6da" vertical={false} />
           <XAxis dataKey="snapshot_seq" tick={axis} tickLine={false} axisLine={{ stroke: '#c9c1b1' }} />
           <YAxis domain={[0, 60]} ticks={[0, 15, 30, 45, 60]} tick={axis} tickLine={false} axisLine={false} />
           <ReferenceLine y={15} stroke="#a35139" strokeDasharray="4 3" />
-          <Tooltip formatter={(v) => [fmtSec(v), 'Load time']} labelFormatter={(l) => `Snapshot ${l}`}
+          <Tooltip formatter={(v) => [fmtSec(v), 'Avg load time']} labelFormatter={(l) => `Snapshot ${l}`}
             contentStyle={{ background: '#1b2632', border: 0, borderRadius: 8, color: '#eee9df', fontSize: 12 }} itemStyle={{ color: '#eee9df' }} />
           <Line type="linear" dataKey="avg_load_time_sec" stroke="#1b2632" strokeWidth={2} dot={{ r: 3, fill: '#1b2632' }} isAnimationActive={false} />
         </LineChart>
@@ -130,8 +132,8 @@ function ReportDetail({ id, snapshot }) {
 
 const FILTERS = [
   { key: 'all', label: 'All', test: () => true },
-  { key: 'slow', label: 'Slow', test: (r) => r.latency_severity !== 'OK' },
-  { key: 'failing', label: 'Failing', test: (r) => FAILED.has(r.last_refresh_status) },
+  { key: 'slow', label: 'Over 15 s', test: (r) => r.latency_severity !== 'OK' },
+  { key: 'failing', label: 'Failed refresh', test: (r) => FAILED.has(r.last_refresh_status) },
   { key: 'orphaned', label: 'No owner', test: (r) => r.is_orphaned },
   { key: 'unknown', label: 'Unknown status', test: (r) => r.last_refresh_status === 'UNKNOWN' },
 ];
@@ -161,7 +163,7 @@ function ReportTable({ reports, onSelect }) {
               {header('report_id', 'Report')}
               {header('owner_email', 'Owner')}
               {header('last_refresh_status', 'Refresh')}
-              {header('avg_load_time_sec', 'Load time', { num: true })}
+              {header('avg_load_time_sec', 'Avg load', { num: true })}
               {header('monthly_active_views', 'Monthly views', { num: true })}
               {header('concurrent_user_peak', 'Peak users', { num: true })}
             </tr>

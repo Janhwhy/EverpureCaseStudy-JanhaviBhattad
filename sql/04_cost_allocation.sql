@@ -38,6 +38,7 @@ SELECT
     r.views,
     r.avg_peak_users,
     ROUND(r.aws_usd / NULLIF(r.views, 0), 4)                AS aws_usd_per_view,
+    ROUND(r.credits * p.usd_per_credit / NULLIF(r.views, 0), 4) AS snowflake_usd_per_view,
     ROUND(r.credits / NULLIF(r.views, 0), 4)                AS credits_per_view,
     ROUND((r.credits * p.usd_per_credit + r.aws_usd) / NULLIF(r.views, 0), 4)
                                                             AS usd_per_view,
@@ -58,6 +59,8 @@ SELECT
     COALESCE(s.owner_email, 'UNASSIGNED')                   AS owner_email,
     COUNT(DISTINCT s.report_id)                             AS reports,
     SUM(s.credits_clean)                                    AS credits,
+    ROUND(SUM(s.credits_clean) * MAX(p.usd_per_credit), 2)  AS snowflake_usd,
+    SUM(s.aws_hosting_cost_usd)                             AS aws_usd,
     ROUND(SUM(s.credits_clean) * MAX(p.usd_per_credit) + SUM(s.aws_hosting_cost_usd), 2)
                                                             AS total_usd,
     SUM(s.monthly_active_views)                             AS views,

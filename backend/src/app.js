@@ -24,6 +24,8 @@ export function createApp({ engine, replay }) {
   // ---- System health (live snapshot) -------------------------------------------------
 
   api.get('/health', requirePermission('health:read'), async (req, res) => {
+    // Percentiles are taken on DOUBLE: on a DECIMAL(6,1) input DuckDB returns DECIMAL(6,1) and
+    // truncates the interpolated value (a median of 24.85 would show as 24.8).
     const [summary] = await query(
       `SELECT
           COUNT(*)                                          AS reports,
@@ -33,8 +35,8 @@ export function createApp({ engine, replay }) {
           COUNT_IF(latency_severity = 'WARNING')            AS latency_warning,
           COUNT_IF(latency_severity = 'CRITICAL')           AS latency_critical,
           COUNT_IF(is_orphaned)                             AS orphaned,
-          ROUND(MEDIAN(avg_load_time_sec), 1)               AS p50_load_sec,
-          ROUND(PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY avg_load_time_sec), 1) AS p95_load_sec
+          ROUND(MEDIAN(avg_load_time_sec::DOUBLE), 1)               AS p50_load_sec,
+          ROUND(PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY avg_load_time_sec::DOUBLE), 1) AS p95_load_sec
        FROM analytics.report_snapshots
        WHERE snapshot_seq = $1`,
       [replay.snapshot],
@@ -42,7 +44,7 @@ export function createApp({ engine, replay }) {
     const trend = await query(
       `SELECT
           snapshot_seq,
-          ROUND(PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY avg_load_time_sec), 1) AS p95_load_sec,
+          ROUND(PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY avg_load_time_sec::DOUBLE), 1) AS p95_load_sec,
           COUNT_IF(is_refresh_failed)                       AS refresh_failed,
           COUNT_IF(latency_severity <> 'OK')                AS latency_breaches,
           COUNT_IF(latency_severity = 'CRITICAL')           AS latency_critical,
@@ -167,16 +169,24 @@ export function createApp({ engine, replay }) {
       ownOnly ? [req.user.email] : [],
     );
     const sum = (k) => reports.reduce((acc, r) => acc + r[k], 0);
-    const totalUsd = sum('total_usd');
+    const round = (x, dp) => Math.round(x * 10 ** dp) / 10 ** dp;
+    const views = sum('views');
+    const perView = (usd) => (views ? round(usd / views, 4) : null);
+    // AWS is measured in USD; Snowflake is measured in credits and priced at an assumed rate.
+    // They are reported separately; total_usd is kept only for ranking and reconciliation.
     res.json({
       scope: ownOnly ? 'own' : 'all',
       usd_per_credit: 3,
       totals: {
         reports: reports.length,
-        credits: Math.round(sum('credits') * 100) / 100,
-        total_usd: Math.round(totalUsd * 100) / 100,
-        views: sum('views'),
-        usd_per_view: reports.length ? Math.round((totalUsd / sum('views')) * 10000) / 10000 : null,
+        credits: round(sum('credits'), 2),
+        aws_usd: round(sum('aws_usd'), 2),
+        snowflake_usd: round(sum('snowflake_usd'), 2),
+        total_usd: round(sum('total_usd'), 2),
+        views,
+        aws_usd_per_view: perView(sum('aws_usd')),
+        snowflake_usd_per_view: perView(sum('snowflake_usd')),
+        usd_per_view: perView(sum('total_usd')),
       },
       reports,
     });
@@ -205,7 +215,10 @@ export function createApp({ engine, replay }) {
           COUNT(*)                                                                AS rows
        FROM analytics.report_snapshots`,
     );
-    res.json({ summary, reconciliation });
+    // A row can fail several rules, so rule hits (sum of affected_rows) > distinct rows flagged.
+    const [{ flagged_rows }] = await query('SELECT COUNT(*) AS flagged_rows FROM (SELECT DISTINCT report_id, snapshot_seq FROM analytics.dq_issues)');
+    const [{ upper_usd_per_view }] = await query('SELECT upper_usd_per_view FROM analytics.aws_cost_per_view_fence');
+    res.json({ summary, reconciliation: { ...reconciliation, flagged_rows }, thresholds: { aws_usd_per_view: upper_usd_per_view } });
   });
 
   api.get('/data-quality/issues', requirePermission('dq:read'), async (req, res) => {

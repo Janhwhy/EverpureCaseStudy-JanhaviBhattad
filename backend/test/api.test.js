@@ -104,3 +104,12 @@ test('report detail returns its history, and /reports/orphaned is not mistaken f
   const orphaned = await (await call('/reports/orphaned', { token: tokens.viewer })).json();
   assert.ok(Array.isArray(orphaned.reports));
 });
+
+test('median and p95 load time match an independent linear-interpolation percentile', async () => {
+  const health = await (await call('/health', { token: tokens.viewer })).json();
+  const { reports } = await (await call('/reports', { token: tokens.viewer })).json();
+  const v = reports.map((r) => r.avg_load_time_sec).sort((a, b) => a - b);
+  const pct = (q) => { const i = q * (v.length - 1); const lo = Math.floor(i); return v[lo] + (v[Math.ceil(i)] - v[lo]) * (i - lo); };
+  assert.equal(health.p50_load_sec, Math.round(pct(0.5) * 10) / 10);
+  assert.equal(health.p95_load_sec, Math.round(pct(0.95) * 10) / 10);
+});

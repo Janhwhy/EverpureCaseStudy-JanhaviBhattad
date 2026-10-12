@@ -48,16 +48,20 @@ export default function Layout() {
 
   // Live headline per card and a stat beside every link.
   const stats = health && {
-    Monitor: { value: `${health.latency_warning + health.latency_critical}/${health.reports}`, label: 'over 15 s now' },
+    Monitor: { value: `${health.latency_warning + health.latency_critical}/${health.reports}`, label: 'avg load over 15 s' },
     Respond: { value: open.size, label: 'open alerts' },
-    Govern: costs && { value: fmtUsdShort(costs.totals.total_usd), label: costs.scope === 'own' ? `your ${costs.totals.reports} reports` : 'total spend' },
+    Govern: costs && [
+      { value: fmtUsdShort(costs.totals.aws_usd), label: 'AWS' },
+      { value: fmtUsdShort(costs.totals.snowflake_usd), label: costs.scope === 'own' ? `Snowflake est. · ${costs.totals.reports} reports you own` : 'Snowflake est.' },
+    ],
   };
   const meta = health && {
-    '/': `p95 ${health.p95_load_sec}s`,
+    '/': `p95 avg load ${health.p95_load_sec}s`,
     '/reports': `${health.reports} reports`,
     '/alerts': `${critical} critical`,
     '/orphaned': `${health.orphaned} now`,
-    '/costs': costs ? `$${costs.totals.usd_per_view.toFixed(2)} / view` : null,
+    '/costs': costs?.totals.aws_usd_per_view != null
+      ? `AWS $${costs.totals.aws_usd_per_view.toFixed(2)} · SF $${costs.totals.snowflake_usd_per_view.toFixed(2)} /view` : null,
     '/data-quality': dq ? `${dq.summary.length} rules` : null,
   };
 
@@ -66,8 +70,8 @@ export default function Layout() {
   }, [pathname]);
 
   const pulse = health && [
-    { to: '/reports', tone: 'critical', value: health.latency_warning + health.latency_critical, label: 'slow' },
-    { to: '/alerts', tone: 'critical', value: health.refresh_failed, label: 'failing' },
+    { to: '/reports', tone: 'critical', value: health.latency_warning + health.latency_critical, label: 'over 15 s' },
+    { to: '/alerts', tone: 'critical', value: health.refresh_failed, label: 'failed refreshes' },
     { to: '/orphaned', tone: 'orphan', value: health.orphaned, label: 'no owner' },
     { to: '/alerts', tone: 'alert', value: open.size, label: 'open alerts' },
   ];
@@ -113,7 +117,7 @@ export default function Layout() {
             <span className="live-dot" aria-hidden="true" />
             {connected ? (
               <>
-                <b>Live</b>
+                <b>Live replay</b>
                 <span className="sep">·</span>
                 Snapshot <b>{snapshot}</b> of {of}
                 <span className="sep">·</span>

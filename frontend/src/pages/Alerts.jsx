@@ -41,15 +41,15 @@ export default function Alerts() {
   return (
     <>
       <div className="kpis">
-        <Kpi label="Open alerts" value={alerts.length} />
-        <Kpi label="Critical" value={critical} note={`${Math.round((critical / Math.max(alerts.length, 1)) * 100)}% of open`} accent />
+        <Kpi label="Open alerts" value={alerts.length} note={`${alerts.filter((a) => a.type === 'LATENCY').length} latency + ${alerts.filter((a) => a.type === 'REFRESH').length} refresh`} />
+        <Kpi label="Critical" value={critical} note="avg load > 30 s, or refresh failed" accent />
         <Kpi label="Unacknowledged" value={unacked} />
         <Kpi label="Opened this snapshot" value={latest?.opened ?? 0} series={history.map((h) => h.opened)}
           note={`${latest?.resolved ?? 0} resolved this snapshot`} />
       </div>
 
       <div className="row r-2-1">
-        <Panel title="Incident flow">
+        <Panel title="Alerts opened vs resolved, per snapshot" sub="Snapshot 1 includes reports already in a bad state when monitoring started">
           <Fill min={250}><ResponsiveContainer width="100%" height="100%">
             <BarChart data={flow} stackOffset="sign" margin={{ top: 8, right: 8, left: -14, bottom: 0 }} barCategoryGap={4}>
               <CartesianGrid stroke="#ece6da" vertical={false} />
@@ -64,7 +64,7 @@ export default function Alerts() {
           </ResponsiveContainer></Fill>
         </Panel>
 
-        <Panel title="Noisiest reports">
+        <Panel title="Most alerts opened, this replay cycle">
           <Fill min={290}><ResponsiveContainer width="100%" height="100%">
             <BarChart data={stats?.noisiest ?? []} layout="vertical" margin={{ top: 0, right: 24, left: 8, bottom: 0 }} barCategoryGap={5}>
               <XAxis type="number" hide allowDecimals={false} />
@@ -88,7 +88,7 @@ export default function Alerts() {
             <thead>
               <tr>
                 <th>Severity</th><th>Report</th><th>Problem</th><th>Owner</th>
-                <th className="num">Seen</th><th>Opened</th><th>Status</th><th />
+                <th className="num" title="Readings received while the alert was open">Readings</th><th>Opened</th><th>Status</th><th />
               </tr>
             </thead>
             <tbody>
@@ -98,7 +98,7 @@ export default function Alerts() {
                   <td><span className={`tag ${a.severity.toLowerCase()}`}>{a.severity}</span></td>
                   <td><Link className="link mono" to={`/reports?id=${a.report_id}`}>{a.report_id}</Link></td>
                   <td>
-                    {a.type === 'LATENCY' ? <>Slow load · <span className="mono">{fmtSec(a.value)}</span></> : <>Refresh · <span className="mono">{a.value}</span></>}
+                    {a.type === 'LATENCY' ? <>Avg load · <span className="mono">{fmtSec(a.value)}</span></> : <>Refresh · <span className="mono">{a.value}</span></>}
                   </td>
                   <td>{a.owner_email ?? <span className="rust">no owner</span>}</td>
                   <td className="num">{a.occurrences}×</td>

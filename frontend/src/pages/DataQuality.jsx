@@ -13,7 +13,7 @@ const RULE_TEXT = {
   UNKNOWN_REFRESH_STATUS: 'Refresh status is UNKNOWN',
   PEAK_USERS_EXCEED_VIEWS: 'Peak concurrent users greater than monthly views',
   ZERO_VIEWS_WITH_COST: 'Hosting cost recorded with 0 views',
-  AWS_COST_PER_VIEW_OUTLIER: 'AWS cost per view above Q3 + 1.5 × IQR',
+  AWS_COST_PER_VIEW_OUTLIER: 'AWS cost per view above Q3 + 1.5 × IQR',  // threshold value appended at render
 };
 const IN_BRIEF = new Set(['ORPHANED_OWNER', 'NEGATIVE_CREDITS', 'AWS_COST_PER_VIEW_OUTLIER', 'ZERO_VIEWS_WITH_COST']);
 
@@ -54,7 +54,7 @@ export default function DataQuality() {
     <>
       <div className="kpis">
         <Kpi label="Rows checked" value={fmtInt(r.rows)} />
-        <Kpi label="Rule failures" value={fmtInt(flagged)} accent />
+        <Kpi label="Rule hits" value={fmtInt(flagged)} note={`on ${fmtInt(r.flagged_rows)} distinct rows (a row can fail several rules)`} accent />
         <Kpi label="Rules applied" value={data.summary.length} note={`${notInBrief} beyond the brief`} />
         <Kpi label="Rows deleted" value="0" />
       </div>
@@ -105,7 +105,10 @@ export default function DataQuality() {
                       {openRule === s.rule ? '▾' : '▸'} {s.rule}
                       {!IN_BRIEF.has(s.rule) && <span className="tag neutral" style={{ marginLeft: 8 }}>NOT IN BRIEF</span>}
                     </td>
-                    <td className="muted wrap">{RULE_TEXT[s.rule]}</td>
+                    <td className="muted wrap">
+                      {RULE_TEXT[s.rule]}
+                      {s.rule === 'AWS_COST_PER_VIEW_OUTLIER' && ` = $${data.thresholds.aws_usd_per_view.toFixed(2)}/view`}
+                    </td>
                     <td><span className={`tag ${s.severity.toLowerCase()}`}>{s.severity}</span></td>
                     <td className="num">{fmtInt(s.affected_rows)}</td>
                     <td className="num">{fmtInt(s.affected_reports)}</td>

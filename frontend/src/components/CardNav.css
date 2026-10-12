@@ -92,6 +92,7 @@
 .nav-card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
 .nav-card-label { font-weight: 800; font-size: 22px; letter-spacing: -0.03em; }
 .nav-card-hint { font-size: 12.5px; font-weight: 700; opacity: 0.75; text-align: right; }
+.nav-card-stats { display: flex; gap: 18px; flex-wrap: wrap; }
 .nav-card-stat { display: flex; align-items: baseline; gap: 8px; }
 .nav-card-stat b { font-size: 34px; font-weight: 800; letter-spacing: -0.03em; line-height: 1; }
 .nav-card-stat span { font-size: 13px; font-weight: 700; opacity: 0.8; }

@@ -1,6 +1,23 @@
 -- Issue log: one row per (snapshot row, rule) that failed. This is what the
 -- Data Quality page and docs/DATA_QUALITY.md are built from.
 
+-- Tukey fence (Q3 + 1.5 * IQR) on AWS hosting cost per view. A named view, so the rule below
+-- and the dashboard quote the same threshold.
+CREATE OR REPLACE VIEW analytics.aws_cost_per_view_fence AS
+WITH aws_per_view AS (
+    SELECT aws_hosting_cost_usd / views_clean AS usd_per_view
+    FROM analytics.report_snapshots
+    WHERE views_clean IS NOT NULL
+)
+SELECT
+    PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY usd_per_view)
+    + 1.5 * (
+        PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY usd_per_view)
+      - PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY usd_per_view)
+    ) AS upper_usd_per_view
+FROM aws_per_view;
+
+
 CREATE OR REPLACE VIEW analytics.dq_issues AS
 WITH aws_per_view AS (
     SELECT
@@ -9,16 +26,6 @@ WITH aws_per_view AS (
         aws_hosting_cost_usd / views_clean AS usd_per_view
     FROM analytics.report_snapshots
     WHERE views_clean IS NOT NULL
-),
-fence AS (
-    -- Tukey fence (Q3 + 1.5 * IQR) on AWS hosting cost per view.
-    SELECT
-        PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY usd_per_view)
-        + 1.5 * (
-            PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY usd_per_view)
-          - PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY usd_per_view)
-        ) AS upper_usd_per_view
-    FROM aws_per_view
 )
 SELECT report_id, snapshot_seq, 'ORPHANED_OWNER' AS rule, 'HIGH' AS severity,
        COALESCE(owner_email_raw, '<null>') AS observed_value,
@@ -53,7 +60,7 @@ UNION ALL
 SELECT a.report_id, a.snapshot_seq, 'AWS_COST_PER_VIEW_OUTLIER', 'LOW',
        'USD ' || CAST(ROUND(a.usd_per_view, 2) AS VARCHAR) || '/view',
        'Kept; hosting cost out of line with usage'
-FROM aws_per_view a CROSS JOIN fence f
+FROM aws_per_view a CROSS JOIN analytics.aws_cost_per_view_fence f
 WHERE a.usd_per_view > f.upper_usd_per_view;
 
 

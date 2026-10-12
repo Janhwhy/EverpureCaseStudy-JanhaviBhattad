@@ -41,20 +41,33 @@ export function Kpi({ label, value, unit, series, note, higherIsBad = true, acce
   const tone = diff == null || diff === 0 ? 'flat' : (diff > 0) === higherIsBad ? 'bad' : 'good';
   return (
     <div className={`kpi ${accent ? 'accent' : ''}`}>
-      <div className="kpi-top">
-        <span className="eyebrow">{label}</span>
-        {diff != null && (
-          <span className={`delta ${tone}`} title="Change since the previous snapshot">
-            {diff > 0 ? '▲' : diff < 0 ? '▼' : '•'} {format(Math.abs(diff))}
-          </span>
-        )}
-      </div>
+      <span className="eyebrow">{label}</span>
       <div className="kpi-value">
         {value}
         {unit && <small>{unit}</small>}
       </div>
-      <div className="kpi-note">{note}</div>
+      <div className="kpi-note">
+        {diff != null && (
+          <span className={`delta ${tone}`} title="Change since the previous snapshot">
+            {diff > 0 ? '▲' : diff < 0 ? '▼' : '•'} {format(Math.abs(diff))} vs prev
+          </span>
+        )}
+        {note}
+      </div>
       {series && <Sparkline values={series} color={higherIsBad ? '#a35139' : '#2c3b4d'} />}
+    </div>
+  );
+}
+
+/** KPI with the two cost sources side by side: AWS (measured in USD) and Snowflake (estimated from credits). */
+export function SplitKpi({ label, aws, snowflake, accent }) {
+  return (
+    <div className={`kpi ${accent ? 'accent' : ''}`}>
+      <span className="eyebrow">{label}</span>
+      <div className="kpi-split">
+        <div><b>{aws}</b><span>AWS hosting</span></div>
+        <div><b>{snowflake}</b><span>Snowflake (est.)</span></div>
+      </div>
     </div>
   );
 }

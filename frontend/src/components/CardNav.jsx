@@ -125,9 +125,13 @@ export default function CardNav({ items, left, center, right, ease = 'power3.out
                 <div className="nav-card-hint">{item.hint}</div>
               </div>
               {item.stat && (
-                <div className="nav-card-stat">
-                  <b>{item.stat.value ?? '—'}</b>
-                  <span>{item.stat.label}</span>
+                <div className="nav-card-stats">
+                  {[].concat(item.stat).map((st) => (
+                    <div key={st.label} className="nav-card-stat">
+                      <b>{st.value ?? '—'}</b>
+                      <span>{st.label}</span>
+                    </div>
+                  ))}
                 </div>
               )}
               <div className="nav-card-links">

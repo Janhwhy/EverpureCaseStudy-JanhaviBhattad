@@ -104,11 +104,10 @@ h1, h2, h3, p { margin: 0; }
 }
 .kpi .eyebrow { font-size: 13px; letter-spacing: 0.08em; line-height: 18px; height: 18px; white-space: nowrap; }
 .kpi-top { display: flex; justify-content: center; align-items: center; }
-.kpi .delta { position: absolute; top: 12px; right: 12px; }
 .kpi svg { align-self: stretch; margin-top: auto; padding-top: 10px; box-sizing: content-box; }
 .kpi-value { font-size: 38px; font-weight: 800; letter-spacing: -0.03em; line-height: 46px; height: 46px; margin-top: 8px; white-space: nowrap; }
 .kpi-value small { font-size: 16px; font-weight: 700; color: var(--muted); margin-left: 4px; letter-spacing: 0; }
-.kpi-note { font-size: 13.5px; font-weight: 600; color: var(--muted); line-height: 20px; min-height: 20px; margin-top: 2px; }
+.kpi-note { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 13.5px; font-weight: 600; color: var(--muted); line-height: 20px; min-height: 20px; margin-top: 2px; }
 .delta { font-size: 12.5px; font-weight: 800; padding: 1px 7px; border-radius: 999px; }
 .delta.bad { background: #f3e1da; color: var(--rust); }
 .delta.good { background: #e1ebe2; color: var(--sage); }
@@ -355,3 +354,8 @@ tbody tr.clickable { cursor: pointer; }
 .pulse-mark.alert { width: 16px; height: 16px; background: var(--amber); color: var(--ink); font-size: 11px; font-weight: 800; }
 @media (max-width: 1250px) { .pulse-label { display: none; } }
 @media (max-width: 980px) { .nav-crumb { display: none; } }
+.kpi-split { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; margin-top: 8px; }
+.kpi-split > div { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.kpi-split > div + div { border-left: 1px solid var(--stone-soft); }
+.kpi-split b { font-size: 26px; font-weight: 800; letter-spacing: -0.03em; line-height: 34px; white-space: nowrap; }
+.kpi-split span { font-size: 12.5px; font-weight: 700; color: var(--muted); }

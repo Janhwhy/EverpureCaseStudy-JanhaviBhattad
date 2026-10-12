@@ -12,16 +12,17 @@ const FAILED = new Set(['FAILED', 'TIMED_OUT']);
 
 const MAP_FILTERS = [
   { key: 'all', label: 'All', test: null },
-  { key: 'slow', label: 'Slow', test: (r) => r.latency_severity !== 'OK' },
-  { key: 'failing', label: 'Refresh failing', test: (r) => FAILED.has(r.last_refresh_status) },
+  { key: 'slow', label: 'Over 15 s', test: (r) => r.latency_severity !== 'OK' },
+  { key: 'failing', label: 'Failed refresh', test: (r) => FAILED.has(r.last_refresh_status) },
   { key: 'orphaned', label: 'No owner', test: (r) => r.is_orphaned },
 ];
 
-// 5-second buckets, coloured by which side of the thresholds they fall.
+// 5-second buckets (lo, hi], so a value exactly on a threshold lands on the right side of it:
+// 15.0 s meets the "over 15 s" target and 30.0 s is a warning, not critical.
 function distribution(reports) {
   const bins = Array.from({ length: 11 }, (_, i) => ({ from: i * 5, to: i * 5 + 5, count: 0 }));
-  for (const r of reports) bins[Math.min(10, Math.floor(r.avg_load_time_sec / 5))].count += 1;
-  return bins.map((b) => ({ ...b, label: `${b.from}–${b.to}s`, tone: b.from >= 30 ? '#a35139' : b.from >= 15 ? '#ffb162' : '#5b7f64' }));
+  for (const r of reports) bins[Math.min(10, Math.max(0, Math.ceil(r.avg_load_time_sec / 5) - 1))].count += 1;
+  return bins.map((b) => ({ ...b, label: `${b.from}–${b.to}s`, tone: b.to > 30 ? '#a35139' : b.to > 15 ? '#ffb162' : '#5b7f64' }));
 }
 
 const DistTooltip = ({ active, payload }) =>
@@ -54,9 +55,9 @@ export default function Overview() {
     <>
       <section className="hero">
         <div>
-          <h2><em>{slow} of {h.reports}</em> dashboards miss the 15 s target</h2>
+          <h2><em>{slow} of {h.reports}</em> dashboards average over 15 s to load</h2>
           <div className="hero-facts">
-            <span>Median <b>{fmtSec(h.p50_load_sec)}</b></span>
+            <span>Median report <b>{fmtSec(h.p50_load_sec)}</b></span>
             <span><b>{h.latency_critical}</b> over 30 s</span>
           </div>
         </div>
@@ -67,7 +68,7 @@ export default function Overview() {
               const t = trend[i];
               return (
                 <div key={i} className={`slot ${i + 1 === h.snapshot ? 'current' : ''}`}
-                  title={t ? `Snapshot ${i + 1}: ${t.latency_breaches} reports over 15 s` : `Snapshot ${i + 1}: not replayed yet`}>
+                  title={t ? `Snapshot ${i + 1}: ${t.latency_breaches} reports with avg load over 15 s` : `Snapshot ${i + 1}: not replayed yet`}>
                   {t && <span style={{ height: `${t.latency_breaches}%` }} />}
                 </div>
               );
@@ -78,10 +79,10 @@ export default function Overview() {
       </section>
 
       <div className="kpis">
-        <Kpi label="Slow reports" value={slow} unit="/ 100" series={series('latency_breaches')} note={`${h.latency_critical} critical`} accent />
-        <Kpi label="Refresh failing" value={h.refresh_failed} series={series('refresh_failed')} note={`${h.refresh_unknown} unknown`} />
-        <Kpi label="No owner" value={h.orphaned} series={series('orphaned')} />
-        <Kpi label="p95 load time" value={h.p95_load_sec} unit="s" series={series('p95_load_sec')} note={`Median ${fmtSec(h.p50_load_sec)}`} />
+        <Kpi label="Avg load over 15 s" value={slow} unit={`/ ${h.reports}`} series={series('latency_breaches')} note={`${h.latency_critical} of them over 30 s`} accent />
+        <Kpi label="Failed + timed out" value={h.refresh_failed} series={series('refresh_failed')} note={`last refresh · ${h.refresh_unknown} unknown not counted`} />
+        <Kpi label="No owner" value={h.orphaned} unit={`/ ${h.reports}`} series={series('orphaned')} />
+        <Kpi label="p95 of avg load" value={h.p95_load_sec} unit="s" series={series('p95_load_sec')} note={`across ${h.reports} reports · median ${fmtSec(h.p50_load_sec)}`} />
       </div>
 
       <div className="row r-2-1">
@@ -95,11 +96,11 @@ export default function Overview() {
       </div>
 
       <div className="row r-1-1">
-        <Panel title="Load-time distribution">
+        <Panel title="Average load time, by report">
           <Fill min={210}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={distribution(rows)} margin={{ top: 16, right: 8, left: -18, bottom: 0 }} barCategoryGap={3}>
-              <XAxis dataKey="from" tick={axis} tickLine={false} axisLine={{ stroke: '#c9c1b1' }} tickFormatter={(v) => `${v}s`} />
+              <XAxis dataKey="label" tick={{ ...axis, fontSize: 10 }} tickLine={false} axisLine={{ stroke: '#c9c1b1' }} interval={0} />
               <YAxis tick={axis} tickLine={false} axisLine={false} allowDecimals={false} />
               <Tooltip content={<DistTooltip />} cursor={{ fill: '#f6f2ea' }} />
               <Bar dataKey="count" radius={[4, 4, 0, 0]} isAnimationActive={false}>
@@ -109,13 +110,13 @@ export default function Overview() {
           </ResponsiveContainer>
           </Fill>
           <div className="legend" style={{ marginTop: 8 }}>
-            <span><i className="sw" style={{ background: '#5b7f64' }} /> Within the 15 s target</span>
-            <span><i className="sw warning" /> 15–30 s</span>
-            <span><i className="sw critical" /> Over 30 s</span>
+            <span><i className="sw" style={{ background: '#5b7f64' }} /> ≤ 15 s (meets target)</span>
+            <span><i className="sw warning" /> &gt;15–30 s</span>
+            <span><i className="sw critical" /> &gt;30 s</span>
           </div>
         </Panel>
 
-        <Panel title="Refresh outcomes">
+        <Panel title="Last scheduled refresh, this snapshot">
           <div style={{ display: 'flex', height: 26, borderRadius: 6, overflow: 'hidden', gap: 2, margin: '8px 0 18px' }}>
             {statuses.filter((s) => s.count).map((s) => (
               <div key={s.status} title={`${s.status}: ${s.count}`} style={{ flex: s.count, background: STATUS_COLOR[s.status] }} />
@@ -129,7 +130,7 @@ export default function Overview() {
               </div>
             ))}
           </div>
-          <div className="eyebrow" style={{ margin: '18px 0 4px' }}>Failed or timed out, each snapshot</div>
+          <div className="eyebrow" style={{ margin: '18px 0 4px' }}>Failed + timed out, each snapshot</div>
           <Fill min={110}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={trend} margin={{ top: 4, right: 0, left: -24, bottom: 0 }} barCategoryGap={3}>

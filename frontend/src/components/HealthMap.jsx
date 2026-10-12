@@ -27,7 +27,7 @@ export default function HealthMap({ reports, highlight }) {
               onMouseMove={(e) => tip.show(e, (
                 <>
                   <div style={{ marginBottom: 6 }}><b>{r.report_id}</b> · {r.report_name}</div>
-                  <KV k="Load time" v={fmtSec(r.avg_load_time_sec)} />
+                  <KV k="Avg load time" v={fmtSec(r.avg_load_time_sec)} />
                   <KV k="Refresh" v={r.last_refresh_status} />
                   <KV k="Owner" v={r.owner_email ?? 'none'} />
                   <KV k="Monthly views" v={fmtInt(r.monthly_active_views)} />
@@ -42,10 +42,10 @@ export default function HealthMap({ reports, highlight }) {
       </div>
       {tip.node}
       <div className="legend" style={{ marginTop: 14 }}>
-        <span><i className="sw ok" /> Under 15 s</span>
-        <span><i className="sw warning" /> 15–30 s</span>
-        <span><i className="sw critical" /> Over 30 s</span>
-        <span><i className="sw fail" /> Refresh failing</span>
+        <span><i className="sw ok" /> Avg load ≤ 15 s</span>
+        <span><i className="sw warning" /> &gt;15–30 s</span>
+        <span><i className="sw critical" /> &gt;30 s</span>
+        <span><i className="sw fail" /> Refresh failed / timed out</span>
         <span><i className="sw orphan" /> No owner</span>
       </div>
     </>
