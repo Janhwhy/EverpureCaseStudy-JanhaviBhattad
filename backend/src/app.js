@@ -44,7 +44,9 @@ export function createApp({ engine, replay }) {
           snapshot_seq,
           ROUND(PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY avg_load_time_sec), 1) AS p95_load_sec,
           COUNT_IF(is_refresh_failed)                       AS refresh_failed,
-          COUNT_IF(latency_severity <> 'OK')                AS latency_breaches
+          COUNT_IF(latency_severity <> 'OK')                AS latency_breaches,
+          COUNT_IF(latency_severity = 'CRITICAL')           AS latency_critical,
+          COUNT_IF(is_orphaned)                             AS orphaned
        FROM analytics.report_snapshots
        WHERE snapshot_seq <= $1
        GROUP BY snapshot_seq
@@ -73,6 +75,18 @@ export function createApp({ engine, replay }) {
     res.json({ snapshot: replay.snapshot, reports });
   });
 
+  // Load time per report per snapshot, up to the live snapshot (heatmap).
+  api.get('/reports/latency-matrix', requirePermission('reports:read'), async (req, res) => {
+    const cells = await query(
+      `SELECT report_id, snapshot_seq, avg_load_time_sec, last_refresh_status
+       FROM analytics.report_snapshots
+       WHERE snapshot_seq <= $1
+       ORDER BY report_id, snapshot_seq`,
+      [replay.snapshot],
+    );
+    res.json({ snapshot: replay.snapshot, of: replay.lastSnapshot, cells });
+  });
+
   api.get('/reports/orphaned', requirePermission('reports:read'), async (req, res) => {
     const reports = await query(
       `WITH last_known AS (
@@ -93,10 +107,24 @@ export function createApp({ engine, replay }) {
     res.json({ snapshot: replay.snapshot, reports });
   });
 
+  api.get('/reports/:id', requirePermission('reports:read'), async (req, res) => {
+    const history = await query(
+      `SELECT snapshot_seq, owner_email, owner_email_raw, last_refresh_status, avg_load_time_sec, latency_severity,
+              monthly_active_views, concurrent_user_peak, credits_clean, aws_hosting_cost_usd
+       FROM analytics.report_snapshots
+       WHERE report_id = $1 AND snapshot_seq <= $2
+       ORDER BY snapshot_seq`,
+      [req.params.id, replay.snapshot],
+    );
+    if (!history.length) return res.status(404).json({ error: `Unknown report ${req.params.id}` });
+    const [{ report_name }] = await query('SELECT report_name FROM analytics.report_current WHERE report_id = $1', [req.params.id]);
+    res.json({ report_id: req.params.id, report_name, history });
+  });
+
   // ---- Alerts ------------------------------------------------------------------------
 
   api.get('/alerts', requirePermission('health:read'), (req, res) => {
-    res.json({ open: engine.openAlerts(), recent: engine.recentEvents() });
+    res.json({ open: engine.openAlerts(), recent: engine.recentEvents(), ...engine.stats() });
   });
 
   api.post('/alerts/:id/ack', requirePermission('alerts:ack'), (req, res) => {
@@ -165,7 +193,10 @@ export function createApp({ engine, replay }) {
   // ---- Data quality ------------------------------------------------------------------
 
   api.get('/data-quality', requirePermission('dq:read'), async (req, res) => {
-    const summary = await query('SELECT * FROM analytics.dq_summary ORDER BY affected_rows DESC');
+    const summary = await query(
+      `SELECT * FROM analytics.dq_summary
+       ORDER BY CASE severity WHEN 'HIGH' THEN 1 WHEN 'MEDIUM' THEN 2 ELSE 3 END, affected_rows DESC`,
+    );
     const [reconciliation] = await query(
       `SELECT
           SUM(snowflake_credits_consumed)                                         AS raw_credits,

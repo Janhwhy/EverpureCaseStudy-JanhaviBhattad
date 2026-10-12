@@ -67,3 +67,17 @@ test('acknowledging records who and is idempotent', () => {
   assert.equal(events.filter((e) => e.includes('acknowledged')).length, 1);
   assert.equal(engine.acknowledge(9999, 'x'), null);
 });
+
+test('per-snapshot stats count opened/resolved and reset when the replay wraps', () => {
+  const engine = new AlertEngine();
+  engine.ingest(reading({ snapshot_seq: 1, avg_load_time_sec: 40 }));
+  engine.ingest(reading({ snapshot_seq: 2, avg_load_time_sec: 5 }));
+  assert.deepEqual(engine.stats().history, [
+    { snapshot: 1, opened: 1, escalated: 0, resolved: 0 },
+    { snapshot: 2, opened: 0, escalated: 0, resolved: 1 },
+  ]);
+  assert.deepEqual(engine.stats().noisiest, [{ report_id: 'RPT_1', report_name: 'Report 1', incidents: 1 }]);
+
+  engine.ingest(reading({ snapshot_seq: 1, avg_load_time_sec: 5 }));
+  assert.deepEqual(engine.stats().history, [{ snapshot: 1, opened: 0, escalated: 0, resolved: 0 }]);
+});

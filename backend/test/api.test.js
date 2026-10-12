@@ -94,3 +94,13 @@ test('telemetry ingest validates input and raises an alert for a slow load', asy
   assert.equal(res.status, 202);
   assert.ok(isOpen((await (await call('/alerts', { token: tokens.admin })).json()).open));
 });
+
+test('report detail returns its history, and /reports/orphaned is not mistaken for a report id', async () => {
+  const detail = await (await call('/reports/RPT_200', { token: tokens.viewer })).json();
+  assert.equal(detail.report_id, 'RPT_200');
+  assert.equal(detail.history.length, 1); // replay is at snapshot 1
+  assert.equal((await call('/reports/RPT_999', { token: tokens.viewer })).status, 404);
+
+  const orphaned = await (await call('/reports/orphaned', { token: tokens.viewer })).json();
+  assert.ok(Array.isArray(orphaned.reports));
+});

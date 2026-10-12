@@ -49,6 +49,12 @@ test('owner chargeback adds up to the same total as report allocation', async ()
   assert.ok(Math.abs(cents(o.total) - cents(expected.cost.total_usd)) <= owners);
 });
 
+test('AWS hosting cost vs usage correlation matches pandas (it is ~0: cost does not follow usage)', async () => {
+  const [r] = await query('SELECT CORR(aws_usd, views) AS r FROM analytics.report_cost');
+  assert.equal(r.r.toFixed(3), expected.aws_vs_usage.r_aws_vs_views_per_report.toFixed(3));
+  assert.ok(Math.abs(r.r) < 0.2);
+});
+
 test('latest snapshot health matches pandas', async () => {
   const [r] = await query(
     `SELECT COUNT_IF(is_orphaned) AS orphaned_reports, COUNT_IF(is_refresh_failed) AS failed_refreshes,

@@ -49,6 +49,10 @@
       }
     ]
   },
+  "aws_vs_usage": {
+    "r_aws_vs_views_per_report": -0.083,
+    "r_aws_vs_views_per_row": -0.027
+  },
   "latest_snapshot": {
     "orphaned_reports": 14,
     "failed_refreshes": 25,

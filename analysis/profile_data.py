@@ -59,6 +59,8 @@ per_report = (
 per_report["total_usd"] = per_report["credits"] * USD_PER_CREDIT + per_report["aws_usd"]
 per_report["usd_per_view"] = per_report["total_usd"] / per_report["views"]
 
+per_report["aws_usd"] = df.groupby("report_id")["aws_hosting_cost_usd"].sum()
+
 latest = df[df["snapshot_seq"] == df["snapshot_seq"].max()]
 latest_orphan = latest["owner_email"].str.strip().isin(ORPHAN_MARKERS)
 
@@ -99,6 +101,11 @@ metrics = {
             {"report_id": rid, "total_usd": r(v)}
             for rid, v in per_report["total_usd"].nlargest(5).items()
         ],
+    },
+    "aws_vs_usage": {
+        # Brief: "discrepancies between active user counts and AWS hosting compute costs".
+        "r_aws_vs_views_per_report": r(per_report["aws_usd"].corr(per_report["views"]), 3),
+        "r_aws_vs_views_per_row": r(df["aws_hosting_cost_usd"].corr(df["monthly_active_views"]), 3),
     },
     "latest_snapshot": {
         "orphaned_reports": int(latest_orphan.sum()),

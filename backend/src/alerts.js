@@ -25,8 +25,13 @@ export class AlertEngine extends EventEmitter {
   #open = new Map(); // `${report_id}:${type}` -> alert
   #recent = [];
   #nextId = 1;
+  // Per-cycle statistics for the Alerts page; reset when the snapshot sequence starts over.
+  #snapshot = null;
+  #history = new Map(); // snapshot -> { opened, escalated, resolved }
+  #incidentsByReport = new Map(); // report_id -> { report_id, report_name, incidents }
 
   ingest(reading) {
+    this.#enterSnapshot(reading.snapshot_seq);
     this.#checkLatency(reading);
     this.#checkRefresh(reading);
   }
@@ -82,6 +87,7 @@ export class AlertEngine extends EventEmitter {
       opened_at: new Date().toISOString(),
       acknowledged_by: null,
       acknowledged_at: null,
+      resolved_snapshot: null,
       resolved_at: null,
     };
     this.#open.set(key, alert);
@@ -97,7 +103,7 @@ export class AlertEngine extends EventEmitter {
   #resolve(key, r, message) {
     const alert = this.#open.get(key);
     this.#open.delete(key);
-    Object.assign(alert, { status: 'resolved', resolved_at: new Date().toISOString(), message });
+    Object.assign(alert, { status: 'resolved', resolved_snapshot: r.snapshot_seq, resolved_at: new Date().toISOString(), message });
     this.#publish('resolved', alert);
   }
 
@@ -123,7 +129,31 @@ export class AlertEngine extends EventEmitter {
     return [...this.#recent];
   }
 
+  stats({ top = 8 } = {}) {
+    return {
+      history: [...this.#history.values()].sort((a, b) => a.snapshot - b.snapshot),
+      noisiest: [...this.#incidentsByReport.values()].sort((a, b) => b.incidents - a.incidents).slice(0, top),
+    };
+  }
+
+  #enterSnapshot(snapshot) {
+    if (snapshot === this.#snapshot) return;
+    if (this.#snapshot !== null && snapshot < this.#snapshot) {
+      this.#history.clear();
+      this.#incidentsByReport.clear();
+    }
+    this.#snapshot = snapshot;
+    if (!this.#history.has(snapshot)) this.#history.set(snapshot, { snapshot, opened: 0, escalated: 0, resolved: 0 });
+  }
+
   #publish(event, alert) {
+    const counts = this.#history.get(this.#snapshot);
+    if (counts && event in counts) counts[event] += 1;
+    if (event === 'opened') {
+      const entry = this.#incidentsByReport.get(alert.report_id) ?? { report_id: alert.report_id, report_name: alert.report_name, incidents: 0 };
+      entry.incidents += 1;
+      this.#incidentsByReport.set(alert.report_id, entry);
+    }
     const payload = { event, alert: { ...alert }, at: new Date().toISOString() };
     this.#recent.unshift(payload);
     this.#recent.length = Math.min(this.#recent.length, RECENT_EVENT_LIMIT);

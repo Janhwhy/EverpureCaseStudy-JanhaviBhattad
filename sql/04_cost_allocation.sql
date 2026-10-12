@@ -19,7 +19,8 @@ per_report AS (
         SUM(CASE WHEN is_negative_credits THEN snowflake_credits_consumed ELSE 0 END)
                                                             AS quarantined_credits,
         SUM(aws_hosting_cost_usd)                           AS aws_usd,
-        SUM(monthly_active_views)                           AS views
+        SUM(monthly_active_views)                           AS views,
+        ROUND(AVG(concurrent_user_peak), 1)                 AS avg_peak_users
     FROM analytics.report_snapshots
     GROUP BY report_id
 )
@@ -35,6 +36,8 @@ SELECT
     r.aws_usd,
     ROUND(r.credits * p.usd_per_credit + r.aws_usd, 2)      AS total_usd,
     r.views,
+    r.avg_peak_users,
+    ROUND(r.aws_usd / NULLIF(r.views, 0), 4)                AS aws_usd_per_view,
     ROUND(r.credits / NULLIF(r.views, 0), 4)                AS credits_per_view,
     ROUND((r.credits * p.usd_per_credit + r.aws_usd) / NULLIF(r.views, 0), 4)
                                                             AS usd_per_view,
