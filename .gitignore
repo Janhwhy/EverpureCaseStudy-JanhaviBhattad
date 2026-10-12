@@ -1,0 +1,10 @@
+# Assessment brief and JD (kept local)
+Given/
+
+node_modules/
+dist/
+.env
+*.duckdb
+*.duckdb.wal
+__pycache__/
+.DS_Store

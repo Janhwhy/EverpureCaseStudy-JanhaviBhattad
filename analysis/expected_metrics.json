@@ -1,0 +1,57 @@
+{
+  "rows": 2000,
+  "reports": 100,
+  "snapshots": 20,
+  "issues": {
+    "ORPHANED_OWNER": 245,
+    "NEGATIVE_CREDITS": 24,
+    "UNKNOWN_REFRESH_STATUS": 100,
+    "PEAK_USERS_EXCEED_VIEWS": 93,
+    "ZERO_VIEWS_WITH_COST": 4,
+    "AWS_COST_PER_VIEW_OUTLIER": 212
+  },
+  "aws_per_view_fence_usd": 1.3508,
+  "latency": {
+    "rows_over_15s": 1490,
+    "rows_over_30s": 910,
+    "max_sec": 55.0
+  },
+  "refresh_failed_rows": 564,
+  "credits": {
+    "raw_total": 1206191.44,
+    "clean_total": 1206352.48,
+    "quarantined_total": -161.04
+  },
+  "cost": {
+    "usd_per_credit": 3.0,
+    "total_usd": 4081006.69,
+    "usd_per_view_overall": 2.7147,
+    "top5_reports_by_total_usd": [
+      {
+        "report_id": "RPT_223",
+        "total_usd": 56220.96
+      },
+      {
+        "report_id": "RPT_209",
+        "total_usd": 52510.98
+      },
+      {
+        "report_id": "RPT_288",
+        "total_usd": 50635.73
+      },
+      {
+        "report_id": "RPT_242",
+        "total_usd": 48594.24
+      },
+      {
+        "report_id": "RPT_232",
+        "total_usd": 48162.18
+      }
+    ]
+  },
+  "latest_snapshot": {
+    "orphaned_reports": 14,
+    "failed_refreshes": 25,
+    "latency_breaches": 76
+  }
+}
