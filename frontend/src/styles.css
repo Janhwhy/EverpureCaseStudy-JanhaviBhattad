@@ -99,7 +99,7 @@ h1, h2, h3, p { margin: 0; }
 .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; }
 .kpi {
   position: relative; background: var(--white); border: 1px solid var(--stone-soft); border-radius: var(--radius);
-  padding: 20px 18px 16px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+  box-shadow: inset 0 4px 0 var(--navy); padding: 22px 18px 16px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
   text-align: center;
 }
 .kpi .eyebrow { font-size: 13px; letter-spacing: 0.08em; line-height: 18px; height: 18px; white-space: nowrap; }
@@ -112,7 +112,6 @@ h1, h2, h3, p { margin: 0; }
 .delta.bad { background: #f3e1da; color: var(--rust); }
 .delta.good { background: #e1ebe2; color: var(--sage); }
 .delta.flat { background: var(--cream); color: var(--muted); }
-.kpi.accent { box-shadow: inset 0 4px 0 var(--rust); }
 
 .row { display: grid; gap: 20px; align-items: stretch; }
 .row.r-2-1 { grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); }
@@ -359,3 +358,9 @@ tbody tr.clickable { cursor: pointer; }
 .kpi-split > div + div { border-left: 1px solid var(--stone-soft); }
 .kpi-split b { font-size: 26px; font-weight: 800; letter-spacing: -0.03em; line-height: 34px; white-space: nowrap; }
 .kpi-split span { font-size: 12.5px; font-weight: 700; color: var(--muted); }
+
+.checklist { list-style: none; margin: 18px 0 0; padding: 0; }
+.checklist li { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--stone-soft); font-size: 13.5px; font-weight: 600; }
+.checklist li span:first-child { color: var(--muted); }
+.checklist li b { font-weight: 800; text-align: right; }
+.checklist .ok-mark { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: #e1ebe2; color: var(--sage); font-size: 11px; font-weight: 800; margin-right: 8px; }

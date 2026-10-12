@@ -20,7 +20,7 @@ export default function Orphaned() {
   return (
     <>
       <div className="kpis">
-        <Kpi label="Reports with no owner" value={reports.length} note={`snapshot ${data.snapshot}`} series={health?.trend.map((t) => t.orphaned)} accent />
+        <Kpi label="Reports with no owner" value={reports.length} note={`snapshot ${data.snapshot}`} series={health?.trend.map((t) => t.orphaned)} />
         <Kpi label="Monthly views on them" value={fmtInt(views)} note="views, not unique users" />
         <Kpi label="Also over 15 s or failed refresh" value={atRisk} unit={`/ ${reports.length}`} />
       </div>

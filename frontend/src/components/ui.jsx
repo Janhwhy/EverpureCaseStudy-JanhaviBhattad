@@ -35,12 +35,12 @@ export function Sparkline({ values, color = '#2c3b4d', height = 30 }) {
  * KPI tile: value, change since the previous snapshot, sparkline of the run so far.
  * `higherIsBad` decides whether an increase is shown as bad (rust) or good (sage).
  */
-export function Kpi({ label, value, unit, series, note, higherIsBad = true, accent, format = (v) => v }) {
+export function Kpi({ label, value, unit, series, note, higherIsBad = true, format = (v) => v }) {
   const prev = series?.length > 1 ? series[series.length - 2] : null;
   const diff = prev == null ? null : Math.round((series[series.length - 1] - prev) * 10) / 10;
   const tone = diff == null || diff === 0 ? 'flat' : (diff > 0) === higherIsBad ? 'bad' : 'good';
   return (
-    <div className={`kpi ${accent ? 'accent' : ''}`}>
+    <div className="kpi">
       <span className="eyebrow">{label}</span>
       <div className="kpi-value">
         {value}
@@ -60,9 +60,9 @@ export function Kpi({ label, value, unit, series, note, higherIsBad = true, acce
 }
 
 /** KPI with the two cost sources side by side: AWS (measured in USD) and Snowflake (estimated from credits). */
-export function SplitKpi({ label, aws, snowflake, accent }) {
+export function SplitKpi({ label, aws, snowflake }) {
   return (
-    <div className={`kpi ${accent ? 'accent' : ''}`}>
+    <div className="kpi">
       <span className="eyebrow">{label}</span>
       <div className="kpi-split">
         <div><b>{aws}</b><span>AWS hosting</span></div>

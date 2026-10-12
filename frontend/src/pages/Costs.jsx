@@ -145,7 +145,7 @@ export default function Costs() {
         <SplitKpi label="Cost per view" aws={fmtUsd2(t.aws_usd_per_view)} snowflake={fmtUsd2(t.snowflake_usd_per_view)} />
         <Kpi label="Snowflake credits used" value={fmtInt(Math.round(t.credits))} note={`priced at ${price}`} />
         {isAll && (
-          <SplitKpi label="Spend while unowned" aws={fmtUsd(unowned?.aws_usd ?? 0)} snowflake={fmtUsd(unowned?.snowflake_usd ?? 0)} accent />
+          <SplitKpi label="Spend while unowned" aws={fmtUsd(unowned?.aws_usd ?? 0)} snowflake={fmtUsd(unowned?.snowflake_usd ?? 0)} />
         )}
       </div>
 

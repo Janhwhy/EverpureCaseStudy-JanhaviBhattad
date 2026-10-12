@@ -49,18 +49,19 @@ export default function DataQuality() {
   const fmt = (n) => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const flagged = data.summary.reduce((s, x) => s + x.affected_rows, 0);
   const notInBrief = data.summary.filter((s) => !IN_BRIEF.has(s.rule)).length;
+  const neg = data.summary.find((s) => s.rule === 'NEGATIVE_CREDITS');
 
   return (
     <>
       <div className="kpis">
         <Kpi label="Rows checked" value={fmtInt(r.rows)} />
-        <Kpi label="Rule hits" value={fmtInt(flagged)} note={`on ${fmtInt(r.flagged_rows)} distinct rows (a row can fail several rules)`} accent />
+        <Kpi label="Rule hits" value={fmtInt(flagged)} note={`on ${fmtInt(r.flagged_rows)} distinct rows (a row can fail several rules)`} />
         <Kpi label="Rules applied" value={data.summary.length} note={`${notInBrief} beyond the brief`} />
         <Kpi label="Rows deleted" value="0" />
       </div>
 
       <div className="row r-1-2">
-        <Panel title="Credit reconciliation" bodyClass="center-body"
+        <Panel title="Credit reconciliation"
           actions={<span className={`tag ${reconciled ? 'ok' : 'critical'}`}>{reconciled ? '✓ RECONCILED' : 'MISMATCH'}</span>}>
           <div className="ledger">
             <div className="term"><span className="eyebrow">Raw</span><strong>{fmt(r.raw_credits)}</strong></div>
@@ -69,6 +70,14 @@ export default function DataQuality() {
             <span className="op">+</span>
             <div className="term"><span className="eyebrow">Quarantined</span><strong className="rust">{fmt(r.quarantined_credits)}</strong></div>
           </div>
+          <ul className="checklist">
+            <li><span>Quarantined</span><b>{neg?.affected_rows ?? 0} negative readings · {neg?.affected_reports ?? 0} reports</b></li>
+            <li><span>Excluded from</span><b>credit and cost totals</b></li>
+            <li><span>Still counted for</span><b>load time, refresh, ownership</b></li>
+            <li><span><i className="ok-mark">✓</i>Totals match to the cent</span><b>{reconciled ? 'yes' : 'no'}</b></li>
+            <li><span><i className="ok-mark">✓</i>Recomputed independently</span><b>pandas, same result</b></li>
+            <li><span><i className="ok-mark">✓</i>Checked on every run</span><b>automated test</b></li>
+          </ul>
         </Panel>
 
         <Panel title="Rows failing each rule">

@@ -42,7 +42,7 @@ export default function Alerts() {
     <>
       <div className="kpis">
         <Kpi label="Open alerts" value={alerts.length} note={`${alerts.filter((a) => a.type === 'LATENCY').length} latency + ${alerts.filter((a) => a.type === 'REFRESH').length} refresh`} />
-        <Kpi label="Critical" value={critical} note="avg load > 30 s, or refresh failed" accent />
+        <Kpi label="Critical" value={critical} note="avg load > 30 s, or refresh failed" />
         <Kpi label="Unacknowledged" value={unacked} />
         <Kpi label="Opened this snapshot" value={latest?.opened ?? 0} series={history.map((h) => h.opened)}
           note={`${latest?.resolved ?? 0} resolved this snapshot`} />

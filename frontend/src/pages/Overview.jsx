@@ -79,7 +79,7 @@ export default function Overview() {
       </section>
 
       <div className="kpis">
-        <Kpi label="Avg load over 15 s" value={slow} unit={`/ ${h.reports}`} series={series('latency_breaches')} note={`${h.latency_critical} of them over 30 s`} accent />
+        <Kpi label="Avg load over 15 s" value={slow} unit={`/ ${h.reports}`} series={series('latency_breaches')} note={`${h.latency_critical} of them over 30 s`} />
         <Kpi label="Failed + timed out" value={h.refresh_failed} series={series('refresh_failed')} note={`last refresh · ${h.refresh_unknown} unknown not counted`} />
         <Kpi label="No owner" value={h.orphaned} unit={`/ ${h.reports}`} series={series('orphaned')} />
         <Kpi label="p95 of avg load" value={h.p95_load_sec} unit="s" series={series('p95_load_sec')} note={`across ${h.reports} reports · median ${fmtSec(h.p50_load_sec)}`} />
