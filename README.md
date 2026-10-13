@@ -205,7 +205,7 @@ backend/
 frontend/
   src/
     pages/         Overview, Reports, Alerts, Orphaned, Costs, Data Quality, Login
-    components/    navigation, KPI tiles, health map, alert feed
+    components/    navigation, KPI tiles, health map, alert feed and toasts, login background
 sql/               SQL suite (see above), sql/snowflake/ for the Snowflake loader and account setup
 analysis/          pandas profiling and the dashboard audit
 data/              pure_insights_monitoring.csv (the extract)
