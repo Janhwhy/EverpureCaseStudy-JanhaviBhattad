@@ -105,11 +105,14 @@ test('report detail returns its history, and /reports/orphaned is not mistaken f
   assert.ok(Array.isArray(orphaned.reports));
 });
 
+// Half away from zero on the exact value: strip float noise first (50.834999... is really 50.835).
+const round2 = (x) => Math.round(Number(x.toFixed(9)) * 100 + Number.EPSILON * 100) / 100;
+
 test('median and p95 load time match an independent linear-interpolation percentile', async () => {
   const health = await (await call('/health', { token: tokens.viewer })).json();
   const { reports } = await (await call('/reports', { token: tokens.viewer })).json();
   const v = reports.map((r) => r.avg_load_time_sec).sort((a, b) => a - b);
   const pct = (q) => { const i = q * (v.length - 1); const lo = Math.floor(i); return v[lo] + (v[Math.ceil(i)] - v[lo]) * (i - lo); };
-  assert.equal(health.p50_load_sec, Math.round(pct(0.5) * 100) / 100);
-  assert.equal(health.p95_load_sec, Math.round(pct(0.95) * 100) / 100);
+  assert.equal(health.p50_load_sec, round2(pct(0.5)));
+  assert.equal(health.p95_load_sec, round2(pct(0.95)));
 });

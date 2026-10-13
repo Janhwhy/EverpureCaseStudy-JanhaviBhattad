@@ -89,6 +89,7 @@ Trade-offs:
 
 - DuckDB is a local database, not a shared warehouse. The `account_usage_sim` schema stands in for Snowflake's `ACCOUNT_USAGE` views, which a real deployment would read instead.
 - The engines differ in small ways. For example, DuckDB's `MEDIAN` on a `DECIMAL(6,1)` column returned a `DECIMAL(6,1)`, cutting 24.85 to 24.8. The audit caught it, and the queries now cast to `DOUBLE` before taking percentiles.
+- Floating point matters at 2 decimals. An exact p95 of 50.835 comes back as the double 50.834999…, which rounds to 50.83 instead of 50.84. The Snowflake audit caught this; percentiles now go through `DECIMAL` before rounding, on both engines.
 
 ## Running on Snowflake
 
@@ -156,8 +157,8 @@ python3 analysis/profile_data.py        # profiles the raw extract; add --write 
 ```
 
 The audit script signs in, reads every endpoint the dashboard uses, recomputes the same
-snapshot independently in pandas from the raw CSV, and prints any value that differs. The latest
-run checked 974 values at snapshot 17, and all matched.
+snapshot independently in pandas from the raw CSV, and prints any value that differs. Latest runs:
+974 of 974 values matched on DuckDB (snapshot 17) and 968 of 968 on Snowflake (snapshot 15).
 
 Display rule: every value that isn't a whole count is shown with exactly 2 decimals.
 

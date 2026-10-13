@@ -25,7 +25,9 @@ export function createApp({ engine, replay }) {
 
   api.get('/health', requirePermission('health:read'), async (req, res) => {
     // Percentiles are taken on DOUBLE: on a DECIMAL(6,1) input DuckDB returns DECIMAL(6,1) and
-    // truncates the interpolated value (a median of 24.85 would show as 24.8).
+    // truncates the interpolated value (a median of 24.85 would show as 24.8). The result goes
+    // through DECIMAL before ROUND: an exact 50.835 comes back as the double 50.834999..., which
+    // ROUND on a double turns into 50.83 instead of 50.84.
     const [summary] = await query(
       `SELECT
           COUNT(*)                                          AS reports,
@@ -35,8 +37,8 @@ export function createApp({ engine, replay }) {
           COUNT_IF(latency_severity = 'WARNING')            AS latency_warning,
           COUNT_IF(latency_severity = 'CRITICAL')           AS latency_critical,
           COUNT_IF(is_orphaned)                             AS orphaned,
-          ROUND(MEDIAN(avg_load_time_sec::DOUBLE), 2)               AS p50_load_sec,
-          ROUND(PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY avg_load_time_sec::DOUBLE), 2) AS p95_load_sec
+          ROUND(MEDIAN(avg_load_time_sec::DOUBLE)::DECIMAL(12,6), 2)::DOUBLE AS p50_load_sec,
+          ROUND((PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY avg_load_time_sec::DOUBLE))::DECIMAL(12,6), 2)::DOUBLE AS p95_load_sec
        FROM analytics.report_snapshots
        WHERE snapshot_seq = $1`,
       [replay.snapshot],
@@ -44,7 +46,7 @@ export function createApp({ engine, replay }) {
     const trend = await query(
       `SELECT
           snapshot_seq,
-          ROUND(PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY avg_load_time_sec::DOUBLE), 2) AS p95_load_sec,
+          ROUND((PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY avg_load_time_sec::DOUBLE))::DECIMAL(12,6), 2)::DOUBLE AS p95_load_sec,
           COUNT_IF(is_refresh_failed)                       AS refresh_failed,
           COUNT_IF(latency_severity <> 'OK')                AS latency_breaches,
           COUNT_IF(latency_severity = 'CRITICAL')           AS latency_critical,

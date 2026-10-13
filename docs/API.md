@@ -138,7 +138,7 @@ Health of all 100 reports in the current snapshot, plus a trend for every snapsh
   "latency_critical": 47,
   "orphaned": 12,
   "p50_load_sec": 27.6,
-  "p95_load_sec": 50.83,
+  "p95_load_sec": 50.84,
   "open_alerts": 108,
   "trend": [
     { "snapshot_seq": 1, "p95_load_sec": 49.07, "refresh_failed": 33, "latency_breaches": 77, "latency_critical": 40, "orphaned": 17 }
