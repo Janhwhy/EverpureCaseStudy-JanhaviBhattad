@@ -103,8 +103,8 @@ export default function Alerts() {
                   <td>{a.owner_email ?? <span className="rust">no owner</span>}</td>
                   <td className="num">{a.occurrences}×</td>
                   <td className="muted">snapshot {a.opened_snapshot} · {timeAgo(a.opened_at)}</td>
-                  <td>{a.acknowledged_by ? <span className="tag neutral">ACK · {a.acknowledged_by.split('@')[0]}</span> : <span className="muted">Open</span>}</td>
-                  <td className="num">{canAck(a) && <button className="btn-sm" onClick={() => acknowledge(a)}>Acknowledge</button>}</td>
+                  <td>{a.acknowledged_by ? <span className="tag neutral">ACK · {a.acknowledged_by.split('@')[0]}</span> : <span className="muted">Unacknowledged</span>}</td>
+                  <td className="num">{canAck(a) && <button className="btn-sm" onClick={() => acknowledge(a)}>Mark acknowledged →</button>}</td>
                 </tr>
               ))}
             </tbody>
