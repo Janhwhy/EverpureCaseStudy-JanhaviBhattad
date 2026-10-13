@@ -46,7 +46,8 @@ export class AlertEngine extends EventEmitter {
       return;
     }
     if (!open) {
-      this.#openAlert(key, 'LATENCY', severity, r, `Avg load ${Number(r.avg_load_time_sec).toFixed(2)}s, over ${LATENCY_WARNING_SEC} s`);
+      const threshold = severity === 'CRITICAL' ? LATENCY_CRITICAL_SEC : LATENCY_WARNING_SEC;
+      this.#openAlert(key, 'LATENCY', severity, r, `Avg load ${Number(r.avg_load_time_sec).toFixed(2)}s, over ${threshold} s`);
       return;
     }
     this.#touch(open, r);

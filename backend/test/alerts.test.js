@@ -34,6 +34,14 @@ test('exactly 15 s is not a breach; the threshold is "exceeds 15 s"', () => {
   assert.equal(engine.openAlerts().length, 0);
 });
 
+test('an alert that opens above 30 s names the 30 s threshold, not 15 s', () => {
+  const engine = new AlertEngine();
+  engine.ingest(reading({ avg_load_time_sec: 37.5 }));
+  const [alert] = engine.openAlerts();
+  assert.equal(alert.severity, 'CRITICAL');
+  assert.equal(alert.message, 'Avg load 37.50s, over 30 s');
+});
+
 test('latency escalates to CRITICAL above 30 s and resolves when back under 15 s', () => {
   const engine = new AlertEngine();
   const events = collect(engine);

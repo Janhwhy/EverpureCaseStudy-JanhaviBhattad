@@ -9,7 +9,9 @@ Submitted for Case Study 3, Technical Data & AI Validation Intern – Monetizati
 - **Frontend:** React 19 + Vite, Recharts
 - **Backend:** Node.js + Express REST API, WebSocket alerts, JWT auth with three roles
 - **Data:** SQL views over the monitoring extract. Runs on DuckDB by default (no setup) or on a real Snowflake account with one setting
-- **Validation:** 21 automated tests, plus an audit script that recomputes every number on the dashboard in pandas
+- **Validation:** 22 automated tests, plus an audit script that recomputes every number on the dashboard in pandas
+
+The full REST API and WebSocket specification is in [`docs/API.md`](docs/API.md).
 
 ---
 
@@ -148,7 +150,7 @@ The Data Quality page shows this check live.
 ## Testing and number audit
 
 ```sh
-cd backend && npm test                  # 21 tests: alert engine, API + roles, reconciliation against pandas
+cd backend && npm test                  # 22 tests: alert engine, API + roles, reconciliation against pandas
 python3 analysis/audit_dashboard.py     # with the backend running: recomputes every number the dashboard shows
 python3 analysis/profile_data.py        # profiles the raw extract; add --write to refresh analysis/expected_metrics.json
 ```
@@ -181,6 +183,7 @@ frontend/
 sql/               SQL suite (see above), sql/snowflake/ for the Snowflake loader and account setup
 analysis/          pandas profiling and the dashboard audit
 data/              pure_insights_monitoring.csv (the extract)
+docs/API.md        REST API and WebSocket specification
 docs/snowflake/    screenshots of the Snowflake run
 ```
 
