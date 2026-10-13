@@ -1,9 +1,10 @@
-# Pure Insights Command Centre
+# Pure Insights Command Centre: Analytics Portal Monitoring and Cost Governance
 
-An admin dashboard for the internal analytics portal: report load times, failed refreshes,
-reports with no owner, live alerts, and Snowflake + AWS cost per report and per owner.
+An administrative dashboard for the internal analytics portal. It monitors report load times,
+failed refreshes and reports without an owner, raises live alerts, and allocates Snowflake and
+AWS costs to each report and owner.
 
-Built for Case Study 3 (Technical Data & AI Validation Intern – Monetization).
+Submitted for Case Study 3, Technical Data & AI Validation Intern – Monetization.
 
 - **Frontend:** React 19 + Vite, Recharts
 - **Backend:** Node.js + Express REST API, WebSocket alerts, JWT auth with three roles
@@ -12,7 +13,7 @@ Built for Case Study 3 (Technical Data & AI Validation Intern – Monetization).
 
 ---
 
-## Run it
+## Getting started
 
 Requirements: Node.js 22.9+ (built on 24; the start scripts use `--env-file-if-exists`), Python 3 with pandas and numpy (only for the audit scripts).
 
@@ -51,7 +52,7 @@ All optional, set in `backend/.env` (see `backend/.env.example`):
 
 ---
 
-## How the "live" data works
+## Live data replay and alerting
 
 The extract has 2,000 rows: 100 reports × 20 rows each, with **no date column**. I treat the
 20 rows per report as 20 monthly snapshots in file order (an assumption, stated on screen as
@@ -73,7 +74,21 @@ readings are over 15 s, so alerting per reading would bury the real changes.
 
 ---
 
-## Using Snowflake instead of DuckDB
+## Why DuckDB
+
+The brief asks for Snowflake SQL. The dashboard runs on DuckDB by default, and on Snowflake with one setting.
+
+- **Anyone can run it.** DuckDB runs inside the Node process with nothing to install and no account, password or key. A reviewer can clone the repo and see the dashboard in two commands.
+- **Same SQL as Snowflake.** DuckDB supports the Snowflake features this project uses: `QUALIFY`, `MEDIAN`, `PERCENTILE_CONT ... WITHIN GROUP`, `CREATE OR REPLACE VIEW` and window functions. So `sql/01`–`04` run unchanged on both engines; only the CSV loader (`00_*`) differs.
+- **No cost while building.** Each test run, restart and audit is free and instant, instead of using warehouse credits.
+- **Proven on Snowflake.** It isn't a substitute for Snowflake: the same tests and the number audit were also run against a real Snowflake account (see below and `docs/snowflake/`).
+
+Trade-offs:
+
+- DuckDB is a local database, not a shared warehouse. The `account_usage_sim` schema stands in for Snowflake's `ACCOUNT_USAGE` views, which a real deployment would read instead.
+- The engines differ in small ways. For example, DuckDB's `MEDIAN` on a `DECIMAL(6,1)` column returned a `DECIMAL(6,1)`, cutting 24.85 to 24.8. The audit caught it, and the queries now cast to `DOUBLE` before taking percentiles.
+
+## Running on Snowflake
 
 The SQL in `sql/01`–`04` runs unchanged on both engines. Only the loader differs.
 
@@ -93,7 +108,7 @@ restart always reflects the current SQL. Screenshots of the Snowflake run are in
 
 ---
 
-## SQL suite
+## SQL script suite
 
 Run in this order. The backend runs them automatically on start (`backend/src/db.js`).
 
@@ -114,7 +129,7 @@ Cost assumptions:
 
 ---
 
-## Data quality
+## Data quality validation
 
 | Rule | Rows | How it's handled |
 |---|---:|---|
@@ -130,7 +145,7 @@ The Data Quality page shows this check live.
 
 ---
 
-## Testing and validation
+## Testing and number audit
 
 ```sh
 cd backend && npm test                  # 21 tests: alert engine, API + roles, reconciliation against pandas
@@ -146,7 +161,7 @@ Display rule: every value that isn't a whole count is shown with exactly 2 decim
 
 ---
 
-## Folder layout
+## Repository structure
 
 ```
 backend/
