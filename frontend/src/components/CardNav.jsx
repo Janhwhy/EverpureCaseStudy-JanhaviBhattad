@@ -1,7 +1,7 @@
 // Adapted from React Bits "CardNav" (https://reactbits.dev, MIT): same GSAP expand/stagger animation,
 // with router links, left/centre/right slots instead of the logo and CTA, and Escape to close.
 import { useLayoutEffect, useRef, useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { gsap } from 'gsap';
 import './CardNav.css';
 
@@ -19,6 +19,7 @@ export default function CardNav({ items, left, center, right, ease = 'power3.out
   const navRef = useRef(null);
   const cardsRef = useRef([]);
   const tlRef = useRef(null);
+  const { pathname } = useLocation();
 
   // Open height follows the cards' content (React Bits only measures on mobile and uses 260px on desktop).
   const calculateHeight = () => {
@@ -48,9 +49,22 @@ export default function CardNav({ items, left, center, right, ease = 'power3.out
   };
 
   useLayoutEffect(() => {
-    gsap.set(navRef.current, { height: TOP_BAR, overflow: 'hidden' });
+    // clip, not hidden: a hidden box can still be scrolled (e.g. by focusing a link in the menu),
+    // which pushed the top row out of the 64px bar after the menu closed.
+    gsap.set(navRef.current, { height: TOP_BAR, overflow: 'clip' });
     return () => tlRef.current?.kill();
   }, []);
+
+  // Navigating always leaves the menu fully closed, without depending on the close animation's
+  // completion callback (which never fires if the animation is interrupted or throttled).
+  useEffect(() => {
+    tlRef.current?.kill();
+    tlRef.current = null;
+    gsap.set(navRef.current, { height: TOP_BAR });
+    navRef.current.scrollTop = 0;
+    setIsHamburgerOpen(false);
+    setIsExpanded(false);
+  }, [pathname]);
 
   // While open, keep the height matched to the content (live numbers load in, window resizes).
   useLayoutEffect(() => {

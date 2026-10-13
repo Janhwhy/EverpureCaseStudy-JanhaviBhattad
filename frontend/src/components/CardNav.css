@@ -14,7 +14,7 @@
   border-radius: 14px;
   box-shadow: 0 10px 30px rgba(27, 38, 50, 0.18);
   position: relative;
-  overflow: hidden;
+  overflow: clip;
   will-change: height;
 }
 

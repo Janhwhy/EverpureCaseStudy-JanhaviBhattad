@@ -172,8 +172,8 @@ python3 analysis/profile_data.py        # profiles the raw extract; add --write 
 
 The audit script signs in, reads every endpoint the dashboard uses, recomputes the same
 snapshot independently in pandas from the raw CSV, and prints any value that differs. Latest runs:
-on DuckDB, 938 of 938 values matched (snapshot 3, including the data-quality cards); on Snowflake,
-968 of 968 matched (snapshot 15).
+on DuckDB, 938 of 938 values matched (snapshot 3); on Snowflake, 977 of 977 matched (snapshot 16).
+Both runs include the data-quality cards.
 
 Display rule: every value that isn't a whole count is shown with exactly 2 decimals.
 
