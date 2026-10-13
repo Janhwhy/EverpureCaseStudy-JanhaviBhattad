@@ -35,8 +35,8 @@ export function createApp({ engine, replay }) {
           COUNT_IF(latency_severity = 'WARNING')            AS latency_warning,
           COUNT_IF(latency_severity = 'CRITICAL')           AS latency_critical,
           COUNT_IF(is_orphaned)                             AS orphaned,
-          ROUND(MEDIAN(avg_load_time_sec::DOUBLE), 1)               AS p50_load_sec,
-          ROUND(PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY avg_load_time_sec::DOUBLE), 1) AS p95_load_sec
+          ROUND(MEDIAN(avg_load_time_sec::DOUBLE), 2)               AS p50_load_sec,
+          ROUND(PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY avg_load_time_sec::DOUBLE), 2) AS p95_load_sec
        FROM analytics.report_snapshots
        WHERE snapshot_seq = $1`,
       [replay.snapshot],
@@ -44,7 +44,7 @@ export function createApp({ engine, replay }) {
     const trend = await query(
       `SELECT
           snapshot_seq,
-          ROUND(PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY avg_load_time_sec::DOUBLE), 1) AS p95_load_sec,
+          ROUND(PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY avg_load_time_sec::DOUBLE), 2) AS p95_load_sec,
           COUNT_IF(is_refresh_failed)                       AS refresh_failed,
           COUNT_IF(latency_severity <> 'OK')                AS latency_breaches,
           COUNT_IF(latency_severity = 'CRITICAL')           AS latency_critical,

@@ -42,14 +42,14 @@ export default function Alerts() {
     <>
       <div className="kpis">
         <Kpi label="Open alerts" value={alerts.length} note={`${alerts.filter((a) => a.type === 'LATENCY').length} latency + ${alerts.filter((a) => a.type === 'REFRESH').length} refresh`} />
-        <Kpi label="Critical" value={critical} note="avg load > 30 s, or refresh failed" />
+        <Kpi label="Critical" value={critical} note="avg load went over 30 s, or refresh failed / timed out" />
         <Kpi label="Unacknowledged" value={unacked} />
         <Kpi label="Opened this snapshot" value={latest?.opened ?? 0} series={history.map((h) => h.opened)}
           note={`${latest?.resolved ?? 0} resolved this snapshot`} />
       </div>
 
       <div className="row r-2-1">
-        <Panel title="Alerts opened vs resolved, per snapshot" sub="Snapshot 1 includes reports already in a bad state when monitoring started">
+        <Panel title="Alerts opened vs resolved, per snapshot" sub="Snapshot 1 is a jump, not a normal month: the start of monitoring, or the replay looping back from 20">
           <Fill min={250}><ResponsiveContainer width="100%" height="100%">
             <BarChart data={flow} stackOffset="sign" margin={{ top: 8, right: 8, left: -14, bottom: 0 }} barCategoryGap={4}>
               <CartesianGrid stroke="#ece6da" vertical={false} />
@@ -64,7 +64,7 @@ export default function Alerts() {
           </ResponsiveContainer></Fill>
         </Panel>
 
-        <Panel title="Most alerts opened, this replay cycle">
+        <Panel title="Most alerts opened, this replay cycle" sub="Top 8 reports by incidents opened; reports with the same count are not ranked">
           <Fill min={290}><ResponsiveContainer width="100%" height="100%">
             <BarChart data={stats?.noisiest ?? []} layout="vertical" margin={{ top: 0, right: 24, left: 8, bottom: 0 }} barCategoryGap={5}>
               <XAxis type="number" hide allowDecimals={false} />

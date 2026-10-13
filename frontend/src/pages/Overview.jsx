@@ -18,7 +18,7 @@ const MAP_FILTERS = [
 ];
 
 // 5-second buckets (lo, hi], so a value exactly on a threshold lands on the right side of it:
-// 15.0 s meets the "over 15 s" target and 30.0 s is a warning, not critical.
+// 15.0 s still meets the target (it is not over 15 s) and 30.0 s is a warning, not critical.
 function distribution(reports) {
   const bins = Array.from({ length: 11 }, (_, i) => ({ from: i * 5, to: i * 5 + 5, count: 0 }));
   for (const r of reports) bins[Math.min(10, Math.max(0, Math.ceil(r.avg_load_time_sec / 5) - 1))].count += 1;
@@ -69,7 +69,7 @@ export default function Overview() {
               return (
                 <div key={i} className={`slot ${i + 1 === h.snapshot ? 'current' : ''}`}
                   title={t ? `Snapshot ${i + 1}: ${t.latency_breaches} reports with avg load over 15 s` : `Snapshot ${i + 1}: not replayed yet`}>
-                  {t && <span style={{ height: `${t.latency_breaches}%` }} />}
+                  {t && <span style={{ height: `${(t.latency_breaches / h.reports) * 100}%` }} />}
                 </div>
               );
             })}
@@ -82,7 +82,7 @@ export default function Overview() {
         <Kpi label="Avg load over 15 s" value={slow} unit={`/ ${h.reports}`} series={series('latency_breaches')} note={`${h.latency_critical} of them over 30 s`} />
         <Kpi label="Failed + timed out" value={h.refresh_failed} series={series('refresh_failed')} note={`last refresh · ${h.refresh_unknown} unknown not counted`} />
         <Kpi label="No owner" value={h.orphaned} unit={`/ ${h.reports}`} series={series('orphaned')} />
-        <Kpi label="p95 of avg load" value={h.p95_load_sec} unit="s" series={series('p95_load_sec')} note={`across ${h.reports} reports · median ${fmtSec(h.p50_load_sec)}`} />
+        <Kpi label="p95 of avg load" value={h.p95_load_sec.toFixed(2)} unit="s" series={series('p95_load_sec')} note={`across ${h.reports} reports · median ${fmtSec(h.p50_load_sec)}`} />
       </div>
 
       <div className="row r-2-1">

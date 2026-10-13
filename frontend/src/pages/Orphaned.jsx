@@ -41,7 +41,7 @@ export default function Orphaned() {
               </div>
               <div className="card-metrics">
                 <div><b>{fmtInt(r.monthly_active_views)}</b><span>Monthly views</span></div>
-                <div><b>{fmtSec(r.avg_load_time_sec)}</b><span>Load time</span></div>
+                <div><b>{fmtSec(r.avg_load_time_sec)}</b><span>Avg load</span></div>
                 <div><Status tone={refreshClass(r.last_refresh_status)}><b style={{ fontSize: 13 }}>{r.last_refresh_status.replace('_', ' ')}</b></Status><span>Refresh</span></div>
               </div>
               {r.last_known_owner && (

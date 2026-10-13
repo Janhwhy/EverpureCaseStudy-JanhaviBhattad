@@ -42,18 +42,18 @@ export class AlertEngine extends EventEmitter {
     const severity = latencySeverity(r.avg_load_time_sec);
 
     if (severity === 'OK') {
-      if (open) this.#resolve(key, r, `Avg load back to ${r.avg_load_time_sec}s`);
+      if (open) this.#resolve(key, r, `Avg load back to ${Number(r.avg_load_time_sec).toFixed(2)}s`);
       return;
     }
     if (!open) {
-      this.#openAlert(key, 'LATENCY', severity, r, `Avg load ${r.avg_load_time_sec}s, over ${LATENCY_WARNING_SEC} s`);
+      this.#openAlert(key, 'LATENCY', severity, r, `Avg load ${Number(r.avg_load_time_sec).toFixed(2)}s, over ${LATENCY_WARNING_SEC} s`);
       return;
     }
     this.#touch(open, r);
     // Incidents only escalate; a CRITICAL that improves to WARNING stays CRITICAL until resolved.
     if (severity === 'CRITICAL' && open.severity === 'WARNING') {
       open.severity = 'CRITICAL';
-      open.message = `Avg load ${r.avg_load_time_sec}s, over ${LATENCY_CRITICAL_SEC} s`;
+      open.message = `Avg load ${Number(r.avg_load_time_sec).toFixed(2)}s, over ${LATENCY_CRITICAL_SEC} s`;
       this.#publish('escalated', open);
     }
   }

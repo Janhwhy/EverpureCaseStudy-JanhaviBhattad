@@ -10,6 +10,7 @@ the API reports at fetch time and recomputes that exact snapshot.
 import json
 import sys
 import urllib.request
+from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 
 import numpy as np
@@ -52,6 +53,10 @@ def pct(series, q):  # PERCENTILE_CONT / MEDIAN = linear interpolation
     return float(np.percentile(series, q * 100, method="linear"))
 
 
+def round2(x):  # SQL ROUND is half away from zero; Python's round() on a float like 25.145 (stored 25.1449...) rounds down
+    return float(Decimal(str(round(float(x), 9))).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
+
+
 # ---------- Live pages: pin to the snapshot the API is on ----------
 health = call("/health", token)
 s = health["snapshot"]
@@ -64,8 +69,8 @@ check("Overview", "refresh FAILED + TIMED_OUT", health["refresh_failed"], cur.fa
 check("Overview", "refresh UNKNOWN", health["refresh_unknown"], (cur.last_refresh_status == "UNKNOWN").sum())
 check("Overview", "refresh SUCCESS", health["refresh_ok"], (cur.last_refresh_status == "SUCCESS").sum())
 check("Overview", "no owner", health["orphaned"], cur.orphan.sum())
-check("Overview", "median of report avg load", health["p50_load_sec"], round(pct(cur.avg_load_time_sec, 0.5), 1), 0.05)
-check("Overview", "p95 of report avg load", health["p95_load_sec"], round(pct(cur.avg_load_time_sec, 0.95), 1), 0.05)
+check("Overview", "median of report avg load", health["p50_load_sec"], round2(pct(cur.avg_load_time_sec, 0.5)), 0.005)
+check("Overview", "p95 of report avg load", health["p95_load_sec"], round2(pct(cur.avg_load_time_sec, 0.95)), 0.005)
 for t in health["trend"]:
     sn = df[df.snap == t["snapshot_seq"]]
     check("Overview trend", f"snap {t['snapshot_seq']} breaches", t["latency_breaches"], (sn.avg_load_time_sec > 15).sum())
@@ -121,7 +126,7 @@ for rid, row in per.iterrows():
     check("Costs", f"{rid} snowflake", api[rid]["snowflake_usd"], round(row.credits * USD_PER_CREDIT, 2), 0.01)
     check("Costs", f"{rid} AWS/view", api[rid]["aws_usd_per_view"], row.aws / row.views, 0.0001)
     check("Costs", f"{rid} SF/view", api[rid]["snowflake_usd_per_view"], row.credits * USD_PER_CREDIT / row.views, 0.0001)
-    check("Costs", f"{rid} avg peak users", api[rid]["avg_peak_users"], row.peak, 0.0501)  # SQL rounds half-up to 1 dp
+    check("Costs", f"{rid} avg peak users", api[rid]["avg_peak_users"], row.peak, 0.00501)  # SQL rounds half-up to 2 dp
 check("Costs scatter", "r(total, views)", np.corrcoef([api[i]["views"] for i in per.index], [api[i]["total_usd"] for i in per.index])[0, 1],
       per.total.corr(per.views), 0.005)
 check("Costs scatter", "r(AWS, avg peak users)", np.corrcoef([api[i]["avg_peak_users"] for i in per.index], [api[i]["aws_usd"] for i in per.index])[0, 1],

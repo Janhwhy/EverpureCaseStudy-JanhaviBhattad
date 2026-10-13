@@ -20,7 +20,7 @@ per_report AS (
                                                             AS quarantined_credits,
         SUM(aws_hosting_cost_usd)                           AS aws_usd,
         SUM(monthly_active_views)                           AS views,
-        ROUND(AVG(concurrent_user_peak), 1)                 AS avg_peak_users
+        ROUND(AVG(concurrent_user_peak), 2)                 AS avg_peak_users
     FROM analytics.report_snapshots
     GROUP BY report_id
 )

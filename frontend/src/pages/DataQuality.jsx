@@ -74,9 +74,9 @@ export default function DataQuality() {
             <li><span>Quarantined</span><b>{neg?.affected_rows ?? 0} negative readings · {neg?.affected_reports ?? 0} reports</b></li>
             <li><span>Excluded from</span><b>credit and cost totals</b></li>
             <li><span>Still counted for</span><b>load time, refresh, ownership</b></li>
-            <li><span><i className="ok-mark">✓</i>Totals match to the cent</span><b>{reconciled ? 'yes' : 'no'}</b></li>
-            <li><span><i className="ok-mark">✓</i>Recomputed independently</span><b>pandas, same result</b></li>
-            <li><span><i className="ok-mark">✓</i>Checked on every run</span><b>automated test</b></li>
+            <li><span><i className="ok-mark">{reconciled ? '✓' : '✗'}</i>Totals match to the cent</span><b>{reconciled ? 'yes' : 'no'}</b></li>
+            <li><span><i className="ok-mark">✓</i>Recomputed independently</span><b>pandas audit script</b></li>
+            <li><span><i className="ok-mark">✓</i>Checked by automated test</span><b>npm test</b></li>
           </ul>
         </Panel>
 

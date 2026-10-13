@@ -6,7 +6,7 @@ import {
 import { useApi } from '../api.js';
 import { useAuth } from '../auth.jsx';
 import { ErrorNote, Fill, Kpi, Loading, Panel, Segmented, SplitKpi, usePaged, useSort } from '../components/ui.jsx';
-import { fmtInt, fmtUsd, fmtUsd2 } from '../format.js';
+import { fmtInt, fmtNum, fmtUsd, fmtUsd2 } from '../format.js';
 
 // AWS hosting is measured in USD. Snowflake is measured in credits and converted at an
 // assumed price, so it is always an estimate. The two are never added together on this page.
@@ -17,7 +17,7 @@ const SOURCES = {
 const SOURCE_OPTIONS = [{ key: 'snowflake', label: 'Snowflake (est.)' }, { key: 'aws', label: 'AWS hosting' }];
 
 const axis = { fontSize: 11, fontFamily: 'IBM Plex Mono', fill: '#59616b', fontWeight: 600 };
-const k = (v) => `$${Math.round(v / 1000)}K`;
+const k = (v) => `$${(v / 1000).toFixed(2)}K`;
 const tooltipStyle = { contentStyle: { background: '#1b2632', border: 0, borderRadius: 8, fontSize: 12 }, itemStyle: { color: '#eee9df' }, labelStyle: { color: '#eee9df', fontWeight: 800 } };
 
 function pearson(xs, ys) {
@@ -38,13 +38,13 @@ function pearson(xs, ys) {
 const SCATTER = {
   snowflake: {
     x: 'views', y: 'snowflake_usd', rank: 'snowflake_usd_per_view',
-    xLabel: 'Views (20 snapshots)', xTick: (v) => `${Math.round(v / 1000)}K`, xPad: 500, yPad: 2000,
+    xLabel: 'Views (20 snapshots)', xTick: (v) => `${(v / 1000).toFixed(2)}K`,
     highlight: '5 highest Snowflake (est.) per view',
   },
   aws: {
-    x: 'avg_peak_users', y: 'aws_usd', rank: 'aws_usd_per_view',
-    xLabel: 'Avg peak concurrent users', xTick: (v) => Math.round(v), xPad: 3, yPad: 300,
-    highlight: '5 highest AWS per view',
+    x: 'avg_peak_users', y: 'aws_usd', rank: 'aws_usd_per_peak_user',
+    xLabel: 'Avg peak concurrent users', xTick: (v) => v.toFixed(2),
+    highlight: '5 highest AWS per peak user',
   },
 };
 
@@ -56,13 +56,13 @@ const ScatterTip = ({ active, payload, mode }) => {
       <b>{r.report_id}</b> · {r.current_owner ?? 'no owner'}
       {mode === 'aws' ? (
         <>
-          <div>AWS {fmtUsd(r.aws_usd)} · {r.avg_peak_users} avg peak users</div>
-          <div>{fmtUsd2(r.aws_usd_per_view)} AWS per view</div>
+          <div>AWS {fmtUsd(r.aws_usd)} · {fmtNum(r.avg_peak_users)} avg peak users</div>
+          <div>{fmtUsd(r.aws_usd_per_peak_user)} per peak user · {fmtUsd2(r.aws_usd_per_view)} per view</div>
         </>
       ) : (
         <>
           <div>Snowflake (est.) {fmtUsd(r.snowflake_usd)} · {fmtInt(r.views)} views</div>
-          <div>{fmtInt(Math.round(r.credits))} credits · {fmtUsd2(r.snowflake_usd_per_view)} per view</div>
+          <div>{fmtNum(r.credits)} credits · {fmtUsd2(r.snowflake_usd_per_view)} per view</div>
         </>
       )}
     </div>
@@ -93,7 +93,7 @@ function FullTable({ reports }) {
               <tr key={r.report_id}>
                 <td><Link className="link mono" to={`/reports?id=${r.report_id}`}>{r.report_id}</Link></td>
                 <td>{r.current_owner ?? <span className="rust">no owner</span>}</td>
-                <td className="num">{fmtInt(Math.round(r.credits))}</td>
+                <td className="num">{fmtNum(r.credits)}</td>
                 <td className="num">{fmtUsd(r.snowflake_usd)}</td>
                 <td className="num">{fmtUsd2(r.snowflake_usd_per_view)}</td>
                 <td className="num">{fmtUsd(r.aws_usd)}</td>
@@ -124,15 +124,15 @@ export default function Costs() {
   if (!data || (isAll && (!owners || !trend))) return <Loading />;
 
   const t = data.totals;
-  const reports = data.reports;
+  const reports = data.reports.map((x) => ({ ...x, aws_usd_per_peak_user: x.aws_usd / x.avg_peak_users }));
   const price = `$${data.usd_per_credit.toFixed(2)}/credit, assumed`;
   const unowned = owners?.find((o) => o.owner_email === 'UNASSIGNED');
   const col = (key) => reports.map((x) => x[key]);
   const sc = SCATTER[lens];
   const cut = [...reports].sort((a, b) => b[sc.rank] - a[sc.rank])[Math.min(4, reports.length - 1)][sc.rank];
   const scatterSub = lens === 'snowflake'
-    ? `r = ${pearson(col('views'), col('snowflake_usd')).toFixed(2)} vs views`
-    : `r = ${pearson(col('avg_peak_users'), col('aws_usd')).toFixed(2)} vs users · r = ${pearson(col('views'), col('aws_usd')).toFixed(2)} vs views`;
+    ? `One dot per report · y = Snowflake (est.), 20 snapshots · r = ${pearson(col('views'), col('snowflake_usd')).toFixed(2)} vs views`
+    : `One dot per report · y = AWS hosting, 20 snapshots · r = ${pearson(col('avg_peak_users'), col('aws_usd')).toFixed(2)} vs users, ${pearson(col('views'), col('aws_usd')).toFixed(2)} vs views`;
   const top = SOURCES[topSource];
   const top10 = [...reports].sort((a, b) => b[top.key] - a[top.key]).slice(0, 10);
   const ownersSorted = owners && [...owners].sort((a, b) => b[SOURCES[ownerSource].key] - a[SOURCES[ownerSource].key]);
@@ -143,7 +143,7 @@ export default function Costs() {
       <div className="kpis">
         <SplitKpi label={`Cost · ${scope}`} aws={fmtUsd(t.aws_usd)} snowflake={fmtUsd(t.snowflake_usd)} />
         <SplitKpi label="Cost per view" aws={fmtUsd2(t.aws_usd_per_view)} snowflake={fmtUsd2(t.snowflake_usd_per_view)} />
-        <Kpi label="Snowflake credits used" value={fmtInt(Math.round(t.credits))} note={`priced at ${price}`} />
+        <Kpi label="Snowflake credits used" value={fmtNum(t.credits)} note={`priced at ${price}`} />
         {isAll && (
           <SplitKpi label="Spend while unowned" aws={fmtUsd(unowned?.aws_usd ?? 0)} snowflake={fmtUsd(unowned?.snowflake_usd ?? 0)} />
         )}
@@ -156,10 +156,10 @@ export default function Costs() {
             <ScatterChart margin={{ top: 10, right: 12, left: 4, bottom: 8 }}>
               <CartesianGrid stroke="#ece6da" />
               <XAxis type="number" dataKey={sc.x} tick={axis} tickLine={false} axisLine={{ stroke: '#c9c1b1' }}
-                tickFormatter={sc.xTick} domain={[`dataMin - ${sc.xPad}`, `dataMax + ${sc.xPad}`]}
+                tickFormatter={sc.xTick} domain={['auto', 'auto']}
                 label={{ value: sc.xLabel, position: 'insideBottom', offset: -4, fontSize: 11, fontWeight: 700, fill: '#59616b' }} />
               <YAxis type="number" dataKey={sc.y} tick={axis} tickLine={false} axisLine={false} tickFormatter={k}
-                domain={[`dataMin - ${sc.yPad}`, `dataMax + ${sc.yPad}`]} />
+                domain={['auto', 'auto']} />
               <ZAxis range={[70, 70]} />
               <Tooltip content={<ScatterTip mode={lens} />} cursor={{ strokeDasharray: '3 3' }} />
               <Scatter data={reports} isAnimationActive={false}>

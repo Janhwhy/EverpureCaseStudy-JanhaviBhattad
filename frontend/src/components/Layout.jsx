@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { useApi } from '../api.js';
 import { useAuth } from '../auth.jsx';
-import { fmtUsdShort } from '../format.js';
+import { fmtSec, fmtUsdShort } from '../format.js';
 import { useLive } from '../live.jsx';
 import CardNav from './CardNav.jsx';
 import ProfileMenu from './ProfileMenu.jsx';
@@ -56,7 +56,7 @@ export default function Layout() {
     ],
   };
   const meta = health && {
-    '/': `p95 avg load ${health.p95_load_sec}s`,
+    '/': `p95 avg load ${fmtSec(health.p95_load_sec)}`,
     '/reports': `${health.reports} reports`,
     '/alerts': `${critical} critical`,
     '/orphaned': `${health.orphaned} now`,
@@ -71,7 +71,7 @@ export default function Layout() {
 
   const pulse = health && [
     { to: '/reports', tone: 'critical', value: health.latency_warning + health.latency_critical, label: 'over 15 s' },
-    { to: '/alerts', tone: 'critical', value: health.refresh_failed, label: 'failed refreshes' },
+    { to: '/alerts', tone: 'critical', value: health.refresh_failed, label: 'failed / timed out' },
     { to: '/orphaned', tone: 'orphan', value: health.orphaned, label: 'no owner' },
     { to: '/alerts', tone: 'alert', value: open.size, label: 'open alerts' },
   ];

@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useApi } from '../api.js';
 import { Chips, ErrorNote, Fill, KV, Loading, Panel, Segmented, Status, usePaged, useSort, useTip } from '../components/ui.jsx';
-import { fmtInt, fmtSec, fmtUsd, fmtUsd2, latencyClass, refreshClass } from '../format.js';
+import { fmtInt, fmtNum, fmtSec, fmtUsd, fmtUsd2, latencyClass, refreshClass } from '../format.js';
 import { useLive } from '../live.jsx';
 
 const axis = { fontSize: 11, fontFamily: 'IBM Plex Mono', fill: '#59616b', fontWeight: 600 };
@@ -35,7 +35,7 @@ function Heatmap({ rows, of, selected, onSelect }) {
     <div onMouseLeave={tip.hide}>
       <div style={{ display: 'grid', gridTemplateColumns: '64px minmax(0, 1fr) 46px', gap: '3px 10px', alignItems: 'center' }}>
         <span className="eyebrow" style={{ fontSize: 10 }}>Report</span>
-        <span className="eyebrow" style={{ fontSize: 10 }}>Avg load time · month (snapshot) 1 → {of}</span>
+        <span className="eyebrow" style={{ fontSize: 10 }}>Avg load time · snapshot (≈ month) 1 → {of}</span>
         <span className="eyebrow" style={{ fontSize: 10, textAlign: 'right' }}>% &gt;15 s</span>
         {rows.map((r) => (
           <div key={r.report_id} style={{ display: 'contents' }}>
@@ -53,13 +53,13 @@ function Heatmap({ rows, of, selected, onSelect }) {
                   ))} />
               ))}
             </div>
-            <span className="mono" style={{ fontSize: 12, fontWeight: 600, textAlign: 'right' }}>{Math.round(r.breachRate * 100)}%</span>
+            <span className="mono" style={{ fontSize: 12, fontWeight: 600, textAlign: 'right' }}>{(r.breachRate * 100).toFixed(2)}%</span>
           </div>
         ))}
         <span />
         <div style={{ display: 'grid', gridTemplateColumns: cols, gap: 2, font: '600 10px IBM Plex Mono', color: '#59616b', textAlign: 'center' }}>
           {Array.from({ length: of }, (_, i) => <span key={i}>{(i + 1) % 5 === 0 || i === 0 ? i + 1 : ''}</span>)}
-          <span style={{ gridColumn: '1 / -1', marginTop: 2 }}>month (snapshot)</span>
+          <span style={{ gridColumn: '1 / -1', marginTop: 2 }}>snapshot (≈ month)</span>
         </div>
         <span />
       </div>
@@ -98,7 +98,7 @@ function ReportDetail({ id, snapshot }) {
         <div className="stat"><b>{breaches}/{h.length}</b><span>Snapshots over 15 s</span></div>
         <div className="stat"><b>{fmtUsd(aws)}</b><span>AWS so far · {fmtUsd2(aws / Math.max(views, 1))}/view</span></div>
         <div className="stat"><b>{fmtUsd(snowflake)}</b><span>Snowflake est. · {fmtUsd2(snowflake / Math.max(views, 1))}/view</span></div>
-        <div className="stat"><b>{fmtInt(Math.round(views / h.length))}</b><span>Avg monthly views</span></div>
+        <div className="stat"><b>{fmtNum(views / h.length)}</b><span>Avg monthly views</span></div>
         <div className="stat"><b>{owners.size}</b><span>Owners so far</span></div>
       </div>
 
@@ -212,7 +212,7 @@ export default function Reports() {
         <Panel
           title="Load time by report and snapshot"
           sub={`After ${matrix.data.snapshot} of ${matrix.data.of} snapshots · ${chronic} report${chronic === 1 ? '' : 's'} over 15 s in 90%+ of them`}
-          actions={<Segmented value={scope} onChange={setScope} options={[{ key: 'top', label: 'Worst 30' }, { key: 'all', label: 'All 100' }]} />}
+          actions={<Segmented value={scope} onChange={setScope} options={[{ key: 'top', label: 'Worst 30' }, { key: 'all', label: `All ${rows.length}` }]} />}
         >
           <Heatmap rows={scope === 'top' ? rows.slice(0, 30) : rows} of={matrix.data.of} selected={selected} onSelect={select} />
         </Panel>
