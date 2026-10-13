@@ -280,11 +280,13 @@ tbody tr.clickable { cursor: pointer; }
 .chart-tooltip b { font-weight: 800; }
 
 /* ================= Login ================= */
-.login { min-height: 100%; background: var(--ink); display: grid; place-items: center; padding: 40px 16px; }
-.login-wrap { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 16px; }
+.login { position: relative; min-height: 100%; background: var(--ink); display: grid; place-items: center; padding: 40px 16px; overflow: hidden; }
+.login-bg { position: absolute; inset: 0; overflow: hidden; }
+.iridescence-canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+.login-wrap { position: relative; z-index: 1; width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 16px; }
 .login-title {
-  color: var(--cream); font-size: 28px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.15;
-  text-align: center; margin-bottom: 10px;
+  color: var(--cream); font-size: 34px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; text-wrap: balance;
+  text-align: center; margin-bottom: 10px; text-shadow: 0 2px 18px rgba(27, 38, 50, 0.85), 0 1px 3px rgba(27, 38, 50, 0.6);
 }
 .login-title em { font-style: normal; color: var(--amber); }
 .login-form { padding: 30px; gap: 16px; }
@@ -292,11 +294,38 @@ tbody tr.clickable { cursor: pointer; }
 .field { display: flex; flex-direction: column; gap: 6px; font-weight: 800; font-size: 13px; }
 .field input { border: 1px solid var(--stone); border-radius: 8px; padding: 11px 13px; font-weight: 600; background: var(--white); }
 .error { color: var(--rust); font-weight: 700; font-size: 13px; }
-.demo button {
-  display: flex; justify-content: space-between; align-items: center; width: 100%; border: 0; background: none;
-  padding: 10px 0; border-top: 1px solid var(--stone-soft); cursor: pointer; text-align: left; font-weight: 700;
+.demo-list { gap: 8px; padding-top: 6px; }
+.demo-account {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; padding: 12px 14px;
+  border-radius: 8px; border: 1px solid var(--stone-soft); background: var(--white); cursor: pointer; text-align: left;
+  transition: background 0.15s, border-color 0.15s, transform 0.15s;
 }
-.demo button:hover .mono { text-decoration: underline; }
+.demo-account:hover { transform: translateY(-1px); }
+.demo-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.demo-role { font-weight: 800; font-size: 14px; }
+.demo-account .mono { font-size: 12px; opacity: 0.7; overflow: hidden; text-overflow: ellipsis; }
+.demo-go {
+  flex: none; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%;
+  border: 1px solid currentColor; font-weight: 800; opacity: 0.55; transition: opacity 0.15s, background 0.15s, color 0.15s;
+}
+.demo-account:hover .demo-go { opacity: 1; }
+
+/* Login panels: frosted glass over the background */
+.login .panel {
+  background: rgba(27, 38, 50, 0.38); border: 1px solid rgba(238, 233, 223, 0.18); color: var(--cream);
+  backdrop-filter: blur(18px) saturate(1.15); -webkit-backdrop-filter: blur(18px) saturate(1.15);
+  box-shadow: 0 20px 50px rgba(27, 38, 50, 0.35);
+}
+.login .eyebrow, .login .muted { color: rgba(238, 233, 223, 0.68); }
+.login .field input { background: rgba(238, 233, 223, 0.08); border-color: rgba(238, 233, 223, 0.28); color: var(--cream); }
+.login .field input:focus { outline-color: var(--cream); }
+.login .btn { background: var(--cream); color: var(--ink); }
+.login .btn:hover { background: var(--white); }
+.login .error { color: var(--amber); }
+.login .demo-account { color: var(--cream); background: rgba(238, 233, 223, 0.06); border-color: rgba(238, 233, 223, 0.16); }
+.login .demo-account:hover { background: rgba(238, 233, 223, 0.12); border-color: rgba(238, 233, 223, 0.32); }
+.login .demo-account[aria-pressed="true"] { background: rgba(238, 233, 223, 0.16); border-color: var(--cream); }
+.login .demo-account[aria-pressed="true"] .demo-go { opacity: 1; background: var(--cream); color: var(--ink); border-color: var(--cream); }
 
 /* Hero snapshot strip: one slot per snapshot, future slots faint */
 .slots { display: grid; gap: 4px; align-items: end; height: 104px; margin-top: 24px; }
@@ -385,3 +414,8 @@ tbody tr.clickable { cursor: pointer; }
 .checklist li span:first-child { color: var(--muted); }
 .checklist li b { font-weight: 800; text-align: right; }
 .source-tag { font-weight: 800; color: var(--ink); padding: 2px 8px; border-radius: 6px; background: var(--white); border: 1px solid var(--stone); font-size: 12px; }
+
+/* Alert toast (SwipeToast) */
+.toast-dot { display: block; width: 10px; height: 10px; margin: 4px; border-radius: 50%; background: var(--amber); }
+.toast-dot.critical { background: var(--rust); box-shadow: 0 0 0 3px rgba(163, 81, 57, 0.35); }
+.swipe-toast__title { font-weight: 800; }

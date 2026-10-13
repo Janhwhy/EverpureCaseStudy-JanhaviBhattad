@@ -32,7 +32,7 @@ export function useAcknowledge() {
 }
 
 const ICON = { opened: '!', escalated: '▲', resolved: '✓', acknowledged: '•' };
-const VERB = { opened: 'opened', escalated: 'escalated to critical', resolved: 'resolved', acknowledged: 'acknowledged' };
+export const VERB = { opened: 'opened', escalated: 'escalated to critical', resolved: 'resolved', acknowledged: 'acknowledged' };
 
 /** Compact stream of the latest alert events, as they arrive over the WebSocket. */
 export function LiveFeed({ events, limit = 30 }) {

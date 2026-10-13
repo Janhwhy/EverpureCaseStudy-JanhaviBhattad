@@ -4,6 +4,7 @@ import { useApi } from '../api.js';
 import { useAuth } from '../auth.jsx';
 import { fmtSec, fmtUsdShort } from '../format.js';
 import { useLive } from '../live.jsx';
+import AlertToast from './AlertToast.jsx';
 import CardNav from './CardNav.jsx';
 import ProfileMenu from './ProfileMenu.jsx';
 
@@ -138,6 +139,7 @@ export default function Layout() {
           <Outlet />
         </div>
       </main>
+      <AlertToast />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../auth.jsx';
+import Iridescence from '../components/Iridescence.jsx';
 
 const DEMO_ACCOUNTS = [
   { email: 'admin@company.com', password: 'admin-demo', role: 'Admin' },
@@ -28,8 +29,9 @@ export default function Login() {
 
   return (
     <div className="login">
+      <Iridescence className="login-bg" />
       <div className="login-wrap">
-        <h1 className="login-title">Admin visibility for the analytics portal, <em>back after Tableau.</em></h1>
+        <h1 className="login-title">Pure Insights <em>Command Centre</em></h1>
         <form className="panel login-form" onSubmit={submit}>
           <h2>Sign in</h2>
           <label className="field">
@@ -46,11 +48,15 @@ export default function Login() {
 
         <div className="panel demo">
           <div className="panel-head"><span className="eyebrow">Demo accounts · click to fill</span></div>
-          <div className="panel-body" style={{ paddingTop: 4, paddingBottom: 8 }}>
+          <div className="panel-body demo-list">
             {DEMO_ACCOUNTS.map((a) => (
-              <button key={a.email} type="button" onClick={() => { setEmail(a.email); setPassword(a.password); }}>
-                <span className="mono">{a.email}</span>
-                <span className="muted">{a.role}</span>
+              <button key={a.email} type="button" className="demo-account" aria-pressed={email === a.email}
+                onClick={() => { setEmail(a.email); setPassword(a.password); }}>
+                <span className="demo-text">
+                  <span className="demo-role">{a.role}</span>
+                  <span className="mono">{a.email}</span>
+                </span>
+                <span className="demo-go" aria-hidden="true">→</span>
               </button>
             ))}
           </div>
