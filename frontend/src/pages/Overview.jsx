@@ -58,7 +58,8 @@ export default function Overview() {
           <h2><em>{slow} of {h.reports}</em> dashboards average over 15 s to load</h2>
           <div className="hero-facts">
             <span>Median report <b>{fmtSec(h.p50_load_sec)}</b></span>
-            <span><b>{h.latency_critical}</b> over 30 s</span>
+            <span><b>{slow}</b> over 15 s</span>
+            <span><b>{h.latency_critical}</b> of them over 30 s</span>
           </div>
         </div>
         <div className="hero-chart">
@@ -69,7 +70,12 @@ export default function Overview() {
               return (
                 <div key={i} className={`slot ${i + 1 === h.snapshot ? 'current' : ''}`}
                   title={t ? `Snapshot ${i + 1}: ${t.latency_breaches} reports with avg load over 15 s` : `Snapshot ${i + 1}: not replayed yet`}>
-                  {t && <span style={{ height: `${(t.latency_breaches / h.reports) * 100}%` }} />}
+                  {t && (
+                    <>
+                      <span style={{ height: `${(t.latency_breaches / h.reports) * 100}%` }} />
+                      <b className="slot-value" style={{ bottom: `calc(${(t.latency_breaches / h.reports) * 100}% + 3px)` }}>{t.latency_breaches}</b>
+                    </>
+                  )}
                 </div>
               );
             })}

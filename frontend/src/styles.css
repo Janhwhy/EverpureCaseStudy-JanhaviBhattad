@@ -45,11 +45,6 @@ h1, h2, h3, p { margin: 0; }
 .app { min-height: 100%; }
 .card-nav { color: var(--cream); }
 
-.role-tag {
-  display: inline-block; padding: 2px 8px; border-radius: 5px;
-  font-size: 10.5px; font-weight: 800; letter-spacing: 0.08em; background: var(--amber); color: var(--ink);
-}
-
 
 .main { min-width: 0; }
 .topbar {
@@ -304,10 +299,12 @@ tbody tr.clickable { cursor: pointer; }
 .demo button:hover .mono { text-decoration: underline; }
 
 /* Hero snapshot strip: one slot per snapshot, future slots faint */
-.slots { display: grid; gap: 4px; align-items: end; height: 104px; margin-top: 10px; }
+.slots { display: grid; gap: 4px; align-items: end; height: 104px; margin-top: 24px; }
 .slot { position: relative; height: 100%; border-radius: 3px; background: rgba(238, 233, 223, 0.07); display: flex; align-items: flex-end; }
 .slot span { display: block; width: 100%; border-radius: 3px; background: var(--amber); }
 .slot.current span { background: var(--cream); }
+.slot-value { position: absolute; left: 0; right: 0; text-align: center; font: 700 10.5px var(--mono); color: var(--stone); }
+.slot.current .slot-value { color: var(--cream); }
 .slots-axis { display: flex; justify-content: space-between; font: 600 10.5px var(--mono); color: var(--stone); margin-top: 6px; }
 
 /* ================= Profile dropdown ================= */
@@ -322,17 +319,31 @@ tbody tr.clickable { cursor: pointer; }
   width: 30px; height: 30px; border-radius: 8px; background: var(--amber); color: var(--ink);
   display: grid; place-items: center; font-weight: 800; font-size: 12px;
 }
-.avatar.lg { width: 42px; height: 42px; font-size: 15px; border-radius: 10px; }
+.avatar.lg { width: 44px; height: 44px; font-size: 15px; border-radius: 50%; }
+/* One colour per role, used on the avatar and the role dot. */
+.avatar.owner { background: var(--sage-soft); color: var(--ink); }
+.avatar.viewer { background: var(--stone); color: var(--ink); }
 .profile-panel {
-  position: fixed; z-index: 60; width: 300px; background: var(--white); color: var(--ink);
-  border: 1px solid var(--stone-soft); border-radius: 12px; box-shadow: 0 16px 40px rgba(27, 38, 50, 0.22); overflow: hidden;
+  position: fixed; z-index: 60; width: 290px; background: var(--white); color: var(--ink);
+  border: 1px solid var(--stone-soft); border-radius: 14px; box-shadow: 0 18px 44px rgba(27, 38, 50, 0.24); overflow: hidden;
 }
-.profile-head { display: flex; gap: 12px; align-items: center; padding: 16px; border-bottom: 1px solid var(--stone-soft); }
-.profile-email { font-weight: 800; font-size: 14px; margin-bottom: 4px; word-break: break-all; }
+/* Dark header continues the top bar the menu drops from. */
+.profile-head { display: flex; gap: 12px; align-items: center; padding: 18px 18px 16px; background: var(--ink); color: var(--cream); }
+.profile-id { min-width: 0; }
+.profile-name-lg { font-weight: 800; font-size: 16px; letter-spacing: -0.01em; line-height: 1.2; }
+.profile-email { font-size: 12.5px; font-weight: 600; color: var(--stone); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.profile-role { display: flex; justify-content: space-between; align-items: center; padding: 13px 18px; border-bottom: 1px solid var(--stone-soft); }
+.profile-role .eyebrow { font-size: 10.5px; }
+.profile-role-name { display: inline-flex; align-items: center; gap: 7px; font-weight: 800; font-size: 13px; }
+.profile-role-name i { width: 8px; height: 8px; border-radius: 50%; background: var(--amber); }
+.profile-role-name.owner i { background: var(--sage); }
+.profile-role-name.viewer i { background: var(--stone); }
+.profile-foot { padding: 10px; }
 .profile-logout {
-  width: 100%; border: 0; background: none; padding: 13px 16px; text-align: left; font-weight: 800; color: var(--rust); cursor: pointer;
+  width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 14px; border-radius: 9px;
+  border: 1px solid var(--stone-soft); background: var(--white); font: 800 13.5px var(--font); color: var(--rust); cursor: pointer;
 }
-.profile-logout:hover { background: var(--hover); }
+.profile-logout:hover { background: #f3e1da; border-color: #f3e1da; }
 .last-owner { font-size: 12.5px; font-weight: 600; color: var(--muted); border-top: 1px solid var(--stone-soft); padding-top: 9px; }
 .last-owner b { color: var(--ink); font-weight: 800; }
 
