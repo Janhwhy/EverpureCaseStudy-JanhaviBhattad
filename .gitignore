@@ -8,3 +8,6 @@ dist/
 *.duckdb.wal
 __pycache__/
 .DS_Store
+
+# Snowflake key pair (private key never committed)
+.snowflake/

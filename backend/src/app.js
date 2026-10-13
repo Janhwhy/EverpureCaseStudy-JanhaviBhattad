@@ -1,6 +1,6 @@
 import express from 'express';
 import { can, login, requireAuth, requirePermission } from './auth.js';
-import { query } from './db.js';
+import { DATA_SOURCE, query } from './db.js';
 
 const REFRESH_STATUSES = new Set(['SUCCESS', 'FAILED', 'TIMED_OUT', 'UNKNOWN']);
 
@@ -56,6 +56,7 @@ export function createApp({ engine, replay }) {
       [replay.snapshot],
     );
     res.json({
+      data_source: DATA_SOURCE,
       snapshot: replay.snapshot,
       of: replay.lastSnapshot,
       ...summary,
@@ -212,7 +213,7 @@ export function createApp({ engine, replay }) {
           SUM(snowflake_credits_consumed)                                         AS raw_credits,
           SUM(credits_clean)                                                      AS clean_credits,
           SUM(CASE WHEN is_negative_credits THEN snowflake_credits_consumed END) AS quarantined_credits,
-          COUNT(*)                                                                AS rows
+          COUNT(*)                                                                AS "rows"
        FROM analytics.report_snapshots`,
     );
     // A row can fail several rules, so rule hits (sum of affected_rows) > distinct rows flagged.

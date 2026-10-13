@@ -364,3 +364,4 @@ tbody tr.clickable { cursor: pointer; }
 .checklist li span:first-child { color: var(--muted); }
 .checklist li b { font-weight: 800; text-align: right; }
 .checklist .ok-mark { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: #e1ebe2; color: var(--sage); font-size: 11px; font-weight: 800; margin-right: 8px; }
+.source-tag { font-weight: 800; color: var(--ink); padding: 2px 8px; border-radius: 6px; background: var(--white); border: 1px solid var(--stone); font-size: 12px; }

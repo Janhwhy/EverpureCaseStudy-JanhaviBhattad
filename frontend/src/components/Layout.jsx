@@ -122,6 +122,14 @@ export default function Layout() {
                 Snapshot <b>{snapshot}</b> of {of}
                 <span className="sep">·</span>
                 <Updated snapshot={snapshot} />
+                {health?.data_source && (
+                  <>
+                    <span className="sep">·</span>
+                    <span className="source-tag" title="Database answering every query on this dashboard">
+                      {health.data_source === 'snowflake' ? 'Snowflake' : 'DuckDB'}
+                    </span>
+                  </>
+                )}
               </>
             ) : 'Reconnecting…'}
           </div>

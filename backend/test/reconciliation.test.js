@@ -12,7 +12,7 @@ before(() => initDb());
 
 test('row and report counts match the raw extract', async () => {
   const [r] = await query(
-    'SELECT COUNT(*) AS rows, COUNT(DISTINCT report_id) AS reports, MAX(snapshot_seq) AS snapshots FROM analytics.report_snapshots',
+    'SELECT COUNT(*) AS "rows", COUNT(DISTINCT report_id) AS reports, MAX(snapshot_seq) AS snapshots FROM analytics.report_snapshots',
   );
   assert.deepEqual(r, { rows: expected.rows, reports: expected.reports, snapshots: expected.snapshots });
 });
