@@ -107,7 +107,17 @@ npm run start:snowflake   # dashboard on Snowflake; the header shows a "Snowflak
 ```
 
 On startup the backend uploads the CSV (PUT + COPY INTO) and recreates every view, so a
-restart always reflects the current SQL. Screenshots of the Snowflake run are in `docs/snowflake/`.
+restart always reflects the current SQL.
+
+Screenshots of the Snowflake run, in `docs/snowflake/`:
+
+| File | Shows |
+|---|---|
+| `2026-10-13-snowflake-overview.jpg`, `-alerts.jpg`, `-costs.jpg`, `-data-quality.jpg` | The dashboard pages running on Snowflake (header shows the "Snowflake" tag) |
+| `snowflake-views.png` | The 8 views created by `sql/01`–`04` in `PURE_INSIGHTS.ANALYTICS` |
+| `snowflake-report-cost-query.png` | Top 10 reports by credits from `REPORT_COST`, run in Snowsight as `PI_APP` on `PI_WH` |
+| `snowflake-dq-summary-query.png` | The six data quality rules from `DQ_SUMMARY` (245 orphaned rows, 24 negative credits, ...) |
+| `snowflake-query-history.png` | Query history for the `PI_SERVICE` user: the backend's queries running on Snowflake |
 
 ---
 
