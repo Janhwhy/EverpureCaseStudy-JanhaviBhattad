@@ -1,4 +1,4 @@
-# Pure Insights Command Centre: Analytics Portal Monitoring and Cost Governance
+# Analytics Portal Monitoring and Cost Governance
 
 An administrative dashboard for the internal analytics portal. It monitors report load times,
 failed refreshes and reports without an owner, raises live alerts, and allocates Snowflake and
