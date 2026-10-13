@@ -119,7 +119,7 @@ export default function CardNav({ items, left, center, right, ease = 'power3.out
         <div className="card-nav-content" aria-hidden={!isExpanded}>
           {items.map((item, idx) => (
             <div key={item.label} className="nav-card" ref={setCardRef(idx)}
-              style={{ backgroundColor: item.bgColor, color: item.textColor, flexGrow: item.links.length }}>
+              style={{ backgroundColor: item.bgColor, color: item.textColor }}>
               <div className="nav-card-head">
                 <div className="nav-card-label">{item.label}</div>
                 <div className="nav-card-hint">{item.hint}</div>
