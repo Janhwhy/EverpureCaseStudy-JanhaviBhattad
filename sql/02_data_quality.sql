@@ -1,5 +1,5 @@
 -- Issue log: one row per (snapshot row, rule) that failed. This is what the
--- Data Quality page and docs/DATA_QUALITY.md are built from.
+-- Data Quality page is built from.
 
 -- Tukey fence (Q3 + 1.5 * IQR) on AWS hosting cost per view. A named view, so the rule below
 -- and the dashboard quote the same threshold.
