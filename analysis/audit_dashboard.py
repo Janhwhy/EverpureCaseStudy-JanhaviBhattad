@@ -166,6 +166,16 @@ rec = dq["reconciliation"]
 check("Data quality", "raw credits", rec["raw_credits"], df.snowflake_credits_consumed.sum(), 0.01)
 check("Data quality", "clean credits", rec["clean_credits"], df.credits_clean.sum(), 0.01)
 check("Data quality", "rows checked", rec["rows"], len(df))
+# The four defect cards: latency spikes and the active-users-vs-AWS discrepancy
+lat = dq["latency"]
+check("Data quality", "max load time", lat["max_sec"], df.avg_load_time_sec.max(), 0.001)
+check("Data quality", "rows over 15 s", lat["rows_over_15s"], int((df.avg_load_time_sec > 15).sum()))
+check("Data quality", "rows over 30 s", lat["rows_over_30s"], int((df.avg_load_time_sec > 30).sum()))
+check("Data quality", "r(AWS, avg peak users)", dq["aws_vs_users"]["r_aws_vs_peak_users"], round2(per.aws.corr(per.peak)), 0.005)
+viewed = df[df.monthly_active_views > 0]
+outliers = viewed[viewed.aws_hosting_cost_usd / viewed.monthly_active_views > dq["thresholds"]["aws_usd_per_view"]]
+check("Data quality", "outlier rows (AWS/view)", len(outliers), summ["AWS_COST_PER_VIEW_OUTLIER"]["affected_rows"])
+check("Data quality", "AWS $ on outlier rows", dq["aws_vs_users"]["outlier_aws_usd"], outliers.aws_hosting_cost_usd.sum(), 0.01)
 
 # ---------- Alerts: every report currently over 15 s must have exactly one open latency alert ----------
 alerts = call("/alerts", token)

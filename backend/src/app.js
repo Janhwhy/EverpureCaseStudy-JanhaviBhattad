@@ -221,7 +221,28 @@ export function createApp({ engine, replay }) {
     // A row can fail several rules, so rule hits (sum of affected_rows) > distinct rows flagged.
     const [{ flagged_rows }] = await query('SELECT COUNT(*) AS flagged_rows FROM (SELECT DISTINCT report_id, snapshot_seq FROM analytics.dq_issues)');
     const [{ upper_usd_per_view }] = await query('SELECT upper_usd_per_view FROM analytics.aws_cost_per_view_fence');
-    res.json({ summary, reconciliation: { ...reconciliation, flagged_rows }, thresholds: { aws_usd_per_view: upper_usd_per_view } });
+    // The brief's injected latency spikes and the "active users vs AWS cost" discrepancy, over all 2,000 rows.
+    const [latency] = await query(
+      `SELECT MAX(avg_load_time_sec)::DOUBLE              AS max_sec,
+              COUNT_IF(latency_severity <> 'OK')        AS rows_over_15s,
+              COUNT_IF(latency_severity = 'CRITICAL')   AS rows_over_30s
+       FROM analytics.report_snapshots`,
+    );
+    const [aws_vs_users] = await query(
+      `SELECT ROUND(CORR(aws_usd, avg_peak_users)::DECIMAL(12,6), 2)::DOUBLE AS r_aws_vs_peak_users,
+              (SELECT ROUND(SUM(s.aws_hosting_cost_usd), 2)::DOUBLE
+                 FROM analytics.dq_issues i
+                 JOIN analytics.report_snapshots s ON s.report_id = i.report_id AND s.snapshot_seq = i.snapshot_seq
+                WHERE i.rule = 'AWS_COST_PER_VIEW_OUTLIER')      AS outlier_aws_usd
+       FROM analytics.report_cost`,
+    );
+    res.json({
+      summary,
+      reconciliation: { ...reconciliation, flagged_rows },
+      thresholds: { aws_usd_per_view: upper_usd_per_view },
+      latency,
+      aws_vs_users,
+    });
   });
 
   api.get('/data-quality/issues', requirePermission('dq:read'), async (req, res) => {

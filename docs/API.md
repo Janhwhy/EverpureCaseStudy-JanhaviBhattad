@@ -1,6 +1,6 @@
 # REST API and WebSocket Specification
 
-Analytics Portal Monitoring and Cost Governance: backend API (`backend/src/app.js`, `backend/src/ws.js`).
+Pure Insights Command Centre backend (`backend/src/app.js`, `backend/src/ws.js`).
 
 | | |
 |---|---|
@@ -370,7 +370,9 @@ Cost charged to the owner **at the time of spend**. `UNASSIGNED` collects spend 
     "raw_credits": 1206191.44, "clean_credits": 1206352.48, "quarantined_credits": -161.04,
     "rows": 2000, "flagged_rows": 525
   },
-  "thresholds": { "aws_usd_per_view": 1.350765340493933 }
+  "thresholds": { "aws_usd_per_view": 1.350765340493933 },
+  "latency": { "max_sec": 55, "rows_over_15s": 1490, "rows_over_30s": 910 },
+  "aws_vs_users": { "r_aws_vs_peak_users": 0, "outlier_aws_usd": 61858.25 }
 }
 ```
 
@@ -378,6 +380,8 @@ Cost charged to the owner **at the time of spend**. `UNASSIGNED` collects spend 
 - `raw_credits` = `clean_credits` + `quarantined_credits`, to the cent.
 - `flagged_rows` counts distinct rows. A row can fail several rules, so the sum of `affected_rows` (678) is higher than `flagged_rows` (525).
 - `thresholds.aws_usd_per_view` is the outlier fence, Q3 + 1.5 × IQR of AWS cost per view.
+- `latency`: the brief's injected load-time spikes, over all 2,000 rows (max, rows over 15 s, rows over 30 s).
+- `aws_vs_users`: the brief's "active users vs AWS hosting cost" discrepancy. `r_aws_vs_peak_users` is the correlation per report between AWS cost and average peak concurrent users (0.00 means none); `outlier_aws_usd` is the AWS spend on rows above the outlier fence.
 
 ### GET `/data-quality/issues?rule=<RULE>`
 

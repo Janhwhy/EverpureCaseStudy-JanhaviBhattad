@@ -1,4 +1,4 @@
-# Analytics Portal Monitoring and Cost Governance
+# Pure Insights Command Centre: Analytics Portal Monitoring and Cost Governance
 
 An administrative dashboard for the internal analytics portal. It monitors report load times,
 failed refreshes and reports without an owner, raises live alerts, and allocates Snowflake and
@@ -134,6 +134,19 @@ Cost assumptions:
 
 ## Data quality validation
 
+The brief lists four injected defects. The Data Quality page opens with one card for each,
+showing what was found and how it was handled:
+
+| Defect in the brief | Found | Handled |
+|---|---|---|
+| Orphaned reports (NaN or `ORPHANED_REPORT` owner) | 245 of 2,000 rows, 94 reports | Kept; listed for reassignment with the last known owner |
+| Negative Snowflake credits | 24 rows, −161.04 credits | Quarantined from cost totals; raw = clean + quarantined, to the cent |
+| Load latency spikes up to 55 s | Max 55.00 s; 1,490 rows over 15 s, 910 over 30 s | Alert at 15 s, critical at 30 s |
+| Active users vs AWS hosting cost | r = 0.00 per report; 212 rows above $1.35/view ($61,858.25) | Flagged; hosting cost doesn't follow usage |
+
+Six validation rules run over every row. Two of them (`UNKNOWN_REFRESH_STATUS`,
+`PEAK_USERS_EXCEED_VIEWS`) go beyond the brief:
+
 | Rule | Rows | How it's handled |
 |---|---:|---|
 | `ORPHANED_OWNER`: owner empty, `"nan"` or `ORPHANED_REPORT` | 245 | Kept; listed on the Orphaned page with the last known owner |
@@ -144,7 +157,8 @@ Cost assumptions:
 | `AWS_COST_PER_VIEW_OUTLIER`: above $1.35/view | 212 | Kept; hosting cost out of line with usage |
 
 Credits reconcile to the cent: raw 1,206,191.44 = clean 1,206,352.48 + quarantined −161.04.
-The Data Quality page shows this check live.
+The Data Quality page shows this check live. Nothing is deleted: bad values are nulled in
+`*_clean` columns and flagged, so every total traces back to the raw file.
 
 ---
 
@@ -158,7 +172,8 @@ python3 analysis/profile_data.py        # profiles the raw extract; add --write 
 
 The audit script signs in, reads every endpoint the dashboard uses, recomputes the same
 snapshot independently in pandas from the raw CSV, and prints any value that differs. Latest runs:
-974 of 974 values matched on DuckDB (snapshot 17) and 968 of 968 on Snowflake (snapshot 15).
+on DuckDB, 938 of 938 values matched (snapshot 3, including the data-quality cards); on Snowflake,
+968 of 968 matched (snapshot 15).
 
 Display rule: every value that isn't a whole count is shown with exactly 2 decimals.
 

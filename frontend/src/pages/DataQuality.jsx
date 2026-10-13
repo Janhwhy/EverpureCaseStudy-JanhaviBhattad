@@ -1,8 +1,9 @@
 import { Fragment, useState } from 'react';
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useApi } from '../api.js';
-import { ErrorNote, Fill, Kpi, Loading, Panel } from '../components/ui.jsx';
-import { fmtInt } from '../format.js';
+import { ErrorNote, Fill, Loading, Panel } from '../components/ui.jsx';
+import { fmtInt, fmtNum, fmtSec, fmtUsd } from '../format.js';
+import { useLive } from '../live.jsx';
 
 const axis = { fontSize: 11, fontFamily: 'IBM Plex Mono', fill: '#59616b', fontWeight: 600 };
 const SEVERITY_COLOR = { HIGH: '#a35139', MEDIUM: '#ffb162', LOW: '#c9c1b1' };
@@ -16,6 +17,18 @@ const RULE_TEXT = {
   AWS_COST_PER_VIEW_OUTLIER: 'AWS cost per view above Q3 + 1.5 × IQR',  // threshold value appended at render
 };
 const IN_BRIEF = new Set(['ORPHANED_OWNER', 'NEGATIVE_CREDITS', 'AWS_COST_PER_VIEW_OUTLIER', 'ZERO_VIEWS_WITH_COST']);
+
+/** KPI card for one injected defect: headline number, two facts, and how it was handled. */
+const DefectCard = ({ label, value, unit, rows, handled, bad }) => (
+  <div className="kpi defect">
+    <span className="eyebrow">{label}</span>
+    <div className="kpi-value">{value}{unit && <small>{unit}</small>}</div>
+    <dl className="defect-facts">
+      {rows.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}
+    </dl>
+    <div className={`defect-handled ${bad ? 'bad' : ''}`}>{handled}</div>
+  </div>
+);
 
 function IssueRows({ rule }) {
   const { data, error } = useApi(`/data-quality/issues?rule=${encodeURIComponent(rule)}`);
@@ -40,6 +53,8 @@ function IssueRows({ rule }) {
 
 export default function DataQuality() {
   const { data, error } = useApi('/data-quality');
+  const { snapshot } = useLive();
+  const health = useApi('/health', [snapshot]).data;
   const [openRule, setOpenRule] = useState(null);
 
   if (error && !data) return <ErrorNote error={error} />;
@@ -47,36 +62,48 @@ export default function DataQuality() {
   const r = data.reconciliation;
   const reconciled = Math.round(r.raw_credits * 100) === Math.round((r.clean_credits + r.quarantined_credits) * 100);
   const fmt = (n) => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const flagged = data.summary.reduce((s, x) => s + x.affected_rows, 0);
-  const notInBrief = data.summary.filter((s) => !IN_BRIEF.has(s.rule)).length;
-  const neg = data.summary.find((s) => s.rule === 'NEGATIVE_CREDITS');
+  const rule = (name) => data.summary.find((s) => s.rule === name) ?? { affected_rows: 0, affected_reports: 0 };
+  const orphan = rule('ORPHANED_OWNER');
+  const neg = rule('NEGATIVE_CREDITS');
+  const outlier = rule('AWS_COST_PER_VIEW_OUTLIER');
+  const peak = rule('PEAK_USERS_EXCEED_VIEWS');
+  const lat = data.latency;
+  const aws = data.aws_vs_users;
 
   return (
     <>
+      {/* One card per data defect the brief says was injected, each with how it was handled. */}
       <div className="kpis">
-        <Kpi label="Rows checked" value={fmtInt(r.rows)} />
-        <Kpi label="Rule hits" value={fmtInt(flagged)} note={`on ${fmtInt(r.flagged_rows)} distinct rows (a row can fail several rules)`} />
-        <Kpi label="Rules applied" value={data.summary.length} note={`${notInBrief} beyond the brief`} />
-        <Kpi label="Rows deleted" value="0" />
+        <DefectCard label="Orphaned report records" value={fmtInt(orphan.affected_rows)} unit={`/ ${fmtInt(r.rows)} rows`}
+          rows={[['Reports affected', orphan.affected_reports], ['No owner now', health?.orphaned ?? '—']]}
+          handled="Kept · listed for reassignment" />
+        <DefectCard label="Negative credits" value={fmtInt(neg.affected_rows)} unit="rows"
+          rows={[['Credits removed', fmtNum(r.quarantined_credits)], ['Raw = clean + quarantined', reconciled ? '✓ to the cent' : '✗ mismatch']]}
+          handled="Quarantined from cost totals" bad={!reconciled} />
+        <DefectCard label="Latency spikes" value={fmtSec(lat.max_sec)} unit="max"
+          rows={[['Rows over 15 s', `${fmtInt(lat.rows_over_15s)} / ${fmtInt(r.rows)}`], ['Rows over 30 s', fmtInt(lat.rows_over_30s)]]}
+          handled="Alert at 15 s · critical at 30 s" />
+        <DefectCard label="Active users vs AWS cost" value={`r = ${aws.r_aws_vs_peak_users.toFixed(2)}`}
+          rows={[
+            [`Rows over $${data.thresholds.aws_usd_per_view.toFixed(2)}/view`, `${fmtInt(outlier.affected_rows)} · ${fmtUsd(aws.outlier_aws_usd)}`],
+            ['Peak users > views', fmtInt(peak.affected_rows)],
+          ]}
+          handled="AWS cost doesn't follow usage" />
       </div>
 
       <div className="row r-1-2">
         <Panel title="Credit reconciliation"
           actions={<span className={`tag ${reconciled ? 'ok' : 'critical'}`}>{reconciled ? '✓ RECONCILED' : 'MISMATCH'}</span>}>
+          {/* Laid out like a ledger sum: raw on top, the two parts it splits into below the rule. */}
           <div className="ledger">
-            <div className="term"><span className="eyebrow">Raw</span><strong>{fmt(r.raw_credits)}</strong></div>
-            <span className="op">=</span>
-            <div className="term"><span className="eyebrow">Clean</span><strong>{fmt(r.clean_credits)}</strong></div>
-            <span className="op">+</span>
-            <div className="term"><span className="eyebrow">Quarantined</span><strong className="rust">{fmt(r.quarantined_credits)}</strong></div>
+            <div className="ledger-row"><span className="eyebrow">Raw credits</span><strong>{fmt(r.raw_credits)}</strong></div>
+            <div className="ledger-row"><span className="eyebrow"><i className="op">=</i>Clean</span><strong>{fmt(r.clean_credits)}</strong></div>
+            <div className="ledger-row"><span className="eyebrow"><i className="op">+</i>Quarantined</span><strong className="rust">{fmt(r.quarantined_credits)}</strong></div>
           </div>
           <ul className="checklist">
-            <li><span>Quarantined</span><b>{neg?.affected_rows ?? 0} negative readings · {neg?.affected_reports ?? 0} reports</b></li>
-            <li><span>Excluded from</span><b>credit and cost totals</b></li>
+            <li><span>Quarantined</span><b>{neg.affected_rows} negative readings, out of cost totals</b></li>
             <li><span>Still counted for</span><b>load time, refresh, ownership</b></li>
-            <li><span><i className="ok-mark">{reconciled ? '✓' : '✗'}</i>Totals match to the cent</span><b>{reconciled ? 'yes' : 'no'}</b></li>
-            <li><span><i className="ok-mark">✓</i>Recomputed independently</span><b>pandas audit script</b></li>
-            <li><span><i className="ok-mark">✓</i>Checked by automated test</span><b>npm test</b></li>
+            <li><span>Verified by</span><b>pandas audit · npm test</b></li>
           </ul>
         </Panel>
 

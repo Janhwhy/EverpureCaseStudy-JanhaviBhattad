@@ -107,6 +107,15 @@ h1, h2, h3, p { margin: 0; }
 .kpi svg { align-self: stretch; margin-top: auto; padding-top: 10px; box-sizing: content-box; }
 .kpi-value { font-size: 38px; font-weight: 800; letter-spacing: -0.03em; line-height: 46px; height: 46px; margin-top: 8px; white-space: nowrap; }
 .kpi-value small { font-size: 16px; font-weight: 700; color: var(--muted); margin-left: 4px; letter-spacing: 0; }
+.kpi.defect { align-items: stretch; }
+.defect .eyebrow, .defect .kpi-value { text-align: center; }
+.defect-facts { margin: 12px 0 0; border-top: 1px solid var(--stone-soft); }
+.defect-facts div { display: flex; justify-content: space-between; gap: 12px; padding: 7px 2px; border-bottom: 1px solid var(--stone-soft); font-size: 13px; }
+.defect-facts dt { color: var(--muted); font-weight: 600; text-align: left; }
+.defect-facts dd { margin: 0; font-weight: 800; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.defect-handled { margin-top: auto; padding-top: 12px; font-size: 12px; font-weight: 800; letter-spacing: 0.02em; color: var(--sage); }
+.defect-handled::before { content: '→ '; }
+.defect-handled.bad { color: var(--rust); }
 .kpi-note { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 13.5px; font-weight: 600; color: var(--muted); line-height: 20px; min-height: 20px; margin-top: 2px; }
 .delta { font-size: 12.5px; font-weight: 800; padding: 1px 7px; border-radius: 999px; }
 .delta.bad { background: #f3e1da; color: var(--rust); }
@@ -256,10 +265,11 @@ tbody tr.clickable { cursor: pointer; }
 .card-metrics span { font-size: 11.5px; color: var(--muted); font-weight: 700; }
 
 /* ================= Ledger ================= */
-.ledger { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
-.ledger .term { display: flex; flex-direction: column; gap: 2px; }
-.ledger .term strong { font-size: 21px; font-weight: 800; letter-spacing: -0.02em; }
-.ledger .op { font-size: 20px; font-weight: 800; color: var(--muted); padding-bottom: 2px; }
+.ledger { display: flex; flex-direction: column; gap: 4px; }
+.ledger-row { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; }
+.ledger-row strong { font-size: 30px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.15; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ledger-row:nth-child(2) { border-top: 2px solid var(--ink); padding-top: 6px; margin-top: 2px; }
+.ledger .op { font-style: normal; display: inline-block; width: 16px; color: var(--ink); font-size: 14px; }
 .issue-detail > td { background: var(--hover); padding: 12px 16px 16px; }
 
 /* ================= Tooltip ================= */
@@ -359,9 +369,8 @@ tbody tr.clickable { cursor: pointer; }
 .kpi-split b { font-size: 26px; font-weight: 800; letter-spacing: -0.03em; line-height: 34px; white-space: nowrap; }
 .kpi-split span { font-size: 12.5px; font-weight: 700; color: var(--muted); }
 
-.checklist { list-style: none; margin: 18px 0 0; padding: 0; }
-.checklist li { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--stone-soft); font-size: 13.5px; font-weight: 600; }
+.checklist { list-style: none; margin: 16px 0 0; padding: 0; }
+.checklist li { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-top: 1px solid var(--stone-soft); font-size: 14px; font-weight: 600; }
 .checklist li span:first-child { color: var(--muted); }
 .checklist li b { font-weight: 800; text-align: right; }
-.checklist .ok-mark { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: #e1ebe2; color: var(--sage); font-size: 11px; font-weight: 800; margin-right: 8px; }
 .source-tag { font-weight: 800; color: var(--ink); padding: 2px 8px; border-radius: 6px; background: var(--white); border: 1px solid var(--stone); font-size: 12px; }
