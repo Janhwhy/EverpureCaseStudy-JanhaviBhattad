@@ -13,6 +13,17 @@ Submitted for Case Study 3, Technical Data & AI Validation Intern – Monetizati
 
 The full REST API and WebSocket specification is in [`docs/API.md`](docs/API.md).
 
+### Where to find each deliverable
+
+| Deliverable | Where |
+|---|---|
+| Full-stack codebase | [`frontend/`](frontend/) (React) and [`backend/`](backend/) (Node.js/Express); setup in [Getting started](#getting-started) |
+| REST API and WebSocket specification | [`docs/API.md`](docs/API.md) |
+| Snowflake cost allocation SQL suite | [`sql/`](sql/), with the Snowflake loader and account setup in [`sql/snowflake/`](sql/snowflake/); see [SQL script suite](#sql-script-suite) |
+| Architecture diagram | [`docs/architecturediagram.png`](docs/architecturediagram.png) |
+| Proof of the Snowflake run | [`docs/snowflake/`](docs/snowflake/); see [Running on Snowflake](#running-on-snowflake) |
+| Tests and number audit | [`backend/test/`](backend/test/) and [`analysis/`](analysis/); see [Testing and number audit](#testing-and-number-audit) |
+
 ---
 
 ## Getting started
